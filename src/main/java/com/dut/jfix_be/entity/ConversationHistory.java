@@ -43,6 +43,7 @@ public class ConversationHistory {
     private Integer userMistakeId;
 
     @Column(name = "create_date", nullable = false)
+    @Builder.Default
     private LocalDateTime createDate = LocalDateTime.now();
 
     @Column(name = "create_by", nullable = false)

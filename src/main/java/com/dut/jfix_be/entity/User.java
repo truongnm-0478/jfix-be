@@ -34,6 +34,7 @@ public class User {
 
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private UserRole role = UserRole.USER;
 
     @Column(nullable = false)
@@ -48,6 +49,7 @@ public class User {
     private String avatar;
 
     @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
     private boolean isDeleted = false;
 
     @Column(nullable = false)
