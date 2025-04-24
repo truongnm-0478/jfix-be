@@ -22,8 +22,8 @@ public class UserMistake {
     @Column(name = "user_id", nullable = false)
     private Integer userId;
 
-    @Column(name = "error_type_id", nullable = false)
-    private Integer errorTypeId;
+    @Column(name = "card_id", nullable = false)
+    private Integer cardId;
 
     @Column(name = "user_input", nullable = false)
     private String userInput;

@@ -39,7 +39,7 @@ public class Vocabulary {
     private String audio;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "jlpt_level")
+    @Column(name = "level")
     private JlptLevel level = JlptLevel.FREE;
 
     private String chapter;

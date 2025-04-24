@@ -1,6 +1,8 @@
 package com.dut.jfix_be.service.impl;
 
+import com.dut.jfix_be.dto.response.GrammarResponse;
 import com.dut.jfix_be.dto.response.VocabularyResponse;
+import com.dut.jfix_be.entity.Grammar;
 import com.dut.jfix_be.entity.Vocabulary;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
@@ -29,7 +31,9 @@ public class VocabularyServiceImpl implements VocabularyService {
     @Override
     public List<VocabularyResponse> findByLevel(JlptLevel level) {
         List<Vocabulary> vocabularies = vocabularyRepository.findByLevel(level);
-        return vocabularies.stream().map(this::mapToResponse).collect(Collectors.toList());
+        return vocabularies.stream()
+                .map(VocabularyResponse::fromVocabulary)
+                .collect(Collectors.toList());
     }
 
     @Override

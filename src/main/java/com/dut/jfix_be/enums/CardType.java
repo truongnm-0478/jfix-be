@@ -2,5 +2,9 @@ package com.dut.jfix_be.enums;
 
 public enum CardType {
     VOCABULARY,
-    GRAMMAR;
+    GRAMMAR,
+    SENTENCE,
+    PARAGRAPH,
+    SPEAKING_QUESTION,
+    FREE_TALK_TOPIC;
 }

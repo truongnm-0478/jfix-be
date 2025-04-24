@@ -1,5 +1,6 @@
 package com.dut.jfix_be.dto.response;
 
+import com.dut.jfix_be.entity.Vocabulary;
 import com.dut.jfix_be.enums.JlptLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,4 +23,20 @@ public class VocabularyResponse {
     private JlptLevel level;
     private String chapter;
     private String section;
+
+    public static VocabularyResponse fromVocabulary(Vocabulary vocabulary) {
+        return VocabularyResponse.builder()
+                .id(vocabulary.getId())
+                .word(vocabulary.getWord())
+                .reading(vocabulary.getReading())
+                .meaning(vocabulary.getMeaning())
+                .exampleWithReading(vocabulary.getExampleWithReading())
+                .exampleWithoutReading(vocabulary.getExampleWithoutReading())
+                .exampleMeaning(vocabulary.getExampleMeaning())
+                .audio(vocabulary.getAudio())
+                .level(vocabulary.getLevel())
+                .chapter(vocabulary.getChapter())
+                .section(vocabulary.getSection())
+                .build();
+    }
 }

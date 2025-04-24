@@ -28,6 +28,18 @@ public class StudyLog {
     @Column(name = "review_date", nullable = false)
     private LocalDateTime reviewDate = LocalDateTime.now();
 
+    @Column(name = "repetition", nullable = false)
+    private Integer repetition = 0;
+
+    @Column(name = "intervals", nullable = false)
+    private Float intervals = 0f;
+
+    @Column(name = "easiness_factor", nullable = false)
+    private Float easinessFactor = 2.5f;
+
+    @Column(name = "last_review_date")
+    private LocalDateTime lastReviewDate;
+
     @Column(nullable = false)
     private Integer performance;
 

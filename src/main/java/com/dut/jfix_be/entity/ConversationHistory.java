@@ -1,20 +1,25 @@
 package com.dut.jfix_be.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "user_error_analytics")
+@Table(name = "conversation_histories")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserErrorAnalytics {
+public class ConversationHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -25,13 +30,17 @@ public class UserErrorAnalytics {
     @Column(name = "card_id", nullable = false)
     private Integer cardId;
 
-    private Float frequency;
+    @Column(name = "user_input", nullable = false)
+    private String userInput;
 
-    @Column(name = "improvement_rate")
-    private Float improvementRate;
+    @Column(name = "ai_reply")
+    private String aiReply;
 
-    @Column(name = "last_occurrence", nullable = false)
-    private LocalDateTime lastOccurrence;
+    @Column(name = "audio_reply")
+    private String audioReply;
+
+    @Column(name = "user_mistake_id")
+    private Integer userMistakeId;
 
     @Column(name = "create_date", nullable = false)
     private LocalDateTime createDate = LocalDateTime.now();

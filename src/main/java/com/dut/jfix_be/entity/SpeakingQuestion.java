@@ -1,6 +1,6 @@
 package com.dut.jfix_be.entity;
 
-import com.dut.jfix_be.enums.ErrorType;
+import com.dut.jfix_be.enums.JlptLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,24 +10,34 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "error_types")
+@Table(name = "speaking_questions")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorTypeEntity {
+public class SpeakingQuestion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "japanese_text", nullable = false)
+    private String japaneseText;
+
+    @Column(name = "vietnamese_text", nullable = false)
+    private String vietnameseText;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "error_type")
-    private ErrorType name = ErrorType.UNDEFINED;
+    @Column(name = "level", nullable = false)
+    private JlptLevel level = JlptLevel.FREE;
 
-    private String description;
+    @Column(name = "sample_answer_japanese")
+    private String sampleAnswerJapanese;
 
-    @Column(name = "severity_level")
-    private Integer severityLevel;
+    @Column(name = "sample_answer_vietnamese")
+    private String sampleAnswerVietnamese;
+
+    @Column(name = "audio_url")
+    private String audioUrl;
 
     @Column(name = "create_date", nullable = false)
     private LocalDateTime createDate = LocalDateTime.now();

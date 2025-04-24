@@ -1,5 +1,6 @@
 package com.dut.jfix_be.entity;
 
+import com.dut.jfix_be.enums.JlptLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,29 +10,34 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_error_analytics")
+@Table(name = "free_talk_topics")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserErrorAnalytics {
+public class FreeTalkTopic {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "user_id", nullable = false)
-    private Integer userId;
+    @Column(name = "japanese_text", nullable = false)
+    private String japaneseText;
 
-    @Column(name = "card_id", nullable = false)
-    private Integer cardId;
+    @Column(name = "vietnamese_text", nullable = false)
+    private String vietnameseText;
 
-    private Float frequency;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "level", nullable = false)
+    private JlptLevel level = JlptLevel.FREE;
 
-    @Column(name = "improvement_rate")
-    private Float improvementRate;
+    @Column(name = "conversation_prompt")
+    private String conversationPrompt;
 
-    @Column(name = "last_occurrence", nullable = false)
-    private LocalDateTime lastOccurrence;
+    @Column(name = "sample_answer_vietnamese")
+    private String sampleAnswerVietnamese;
+
+    @Column(name = "audio_url")
+    private String audioUrl;
 
     @Column(name = "create_date", nullable = false)
     private LocalDateTime createDate = LocalDateTime.now();

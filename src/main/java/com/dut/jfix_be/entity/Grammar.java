@@ -25,6 +25,7 @@ public class Grammar {
     @Column(nullable = false)
     private String structure;
 
+    @Column(columnDefinition = "TEXT")
     private String usage;
 
     private String meaning;
@@ -35,7 +36,7 @@ public class Grammar {
     private String exampleMeaning;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "jlpt_level", nullable = false)
+    @Column(name = "level", nullable = false)
     private JlptLevel level = JlptLevel.FREE;
 
     @Column(name = "create_date", nullable = false)
