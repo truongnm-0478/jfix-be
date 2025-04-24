@@ -1,7 +1,7 @@
 package com.dut.jfix_be.exception;
 
-import com.dut.jfix_be.dto.ApiResponse;
-import jakarta.validation.ConstraintViolationException;
+import java.util.Locale;
+
 import org.springframework.context.MessageSource;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Locale;
+import com.dut.jfix_be.dto.ApiResponse;
+
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -22,10 +24,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<?>> handleNotFound(ResourceNotFoundException ex, Locale locale) {
-        String message = messageSource.getMessage(ex.getMessage(), null, locale);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error(HttpStatus.NOT_FOUND.value(), message));
+    public ResponseEntity<ApiResponse<Object>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        ApiResponse<Object> response = ApiResponse.<Object>error(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -60,9 +61,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<?>> handleGeneralException(Exception ex, Locale locale) {
-        String message = messageSource.getMessage("error.internal", null, "Internal server error", locale);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error(HttpStatus.INTERNAL_SERVER_ERROR.value(), message));
+    public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
+        ApiResponse<Object> response = ApiResponse.<Object>error(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
