@@ -153,38 +153,24 @@ public class LearningGoalServiceImpl implements LearningGoalService {
             for (int i = 0; i < vocabPerDay && vocabIndex < vocabularies.size(); i++, vocabIndex++) {
                 Vocabulary vocab = vocabularies.get(vocabIndex);
                 createCardWithStudyLog(userId, vocabDeckResponse.getId(), CardType.VOCABULARY, vocab.getId(), null, reviewDate);
-                createCardWithStudyLog(userId, vocabDeckResponse.getId(), CardType.VOCABULARY, vocab.getId(), Skill.JP_VI_TRANSLATION, reviewDate);
-                createCardWithStudyLog(userId, vocabDeckResponse.getId(), CardType.VOCABULARY, vocab.getId(), Skill.VI_JP_TRANSLATION, reviewDate);
-                createCardWithStudyLog(userId, vocabDeckResponse.getId(), CardType.VOCABULARY, vocab.getId(), Skill.SENTENCE_ARRANGEMENT, reviewDate);
-                createCardWithStudyLog(userId, vocabDeckResponse.getId(), CardType.VOCABULARY, vocab.getId(), Skill.DICTATION, reviewDate);
-                createCardWithStudyLog(userId, vocabDeckResponse.getId(), CardType.VOCABULARY, vocab.getId(), Skill.REPEAT, reviewDate);
             }
 
             // Process grammar cards
             for (int i = 0; i < grammarPerDay && grammarIndex < grammars.size(); i++, grammarIndex++) {
                 Grammar grammar = grammars.get(grammarIndex);
                 createCardWithStudyLog(userId, grammarDeckResponse.getId(), CardType.GRAMMAR, grammar.getId(), null, reviewDate);
-                createCardWithStudyLog(userId, grammarDeckResponse.getId(), CardType.GRAMMAR, grammar.getId(), Skill.JP_VI_TRANSLATION, reviewDate);
-                createCardWithStudyLog(userId, grammarDeckResponse.getId(), CardType.GRAMMAR, grammar.getId(), Skill.VI_JP_TRANSLATION, reviewDate);
-                createCardWithStudyLog(userId, grammarDeckResponse.getId(), CardType.GRAMMAR, grammar.getId(), Skill.SENTENCE_ARRANGEMENT, reviewDate);
-                createCardWithStudyLog(userId, grammarDeckResponse.getId(), CardType.GRAMMAR, grammar.getId(), Skill.DICTATION, reviewDate);
-                createCardWithStudyLog(userId, grammarDeckResponse.getId(), CardType.GRAMMAR, grammar.getId(), Skill.REPEAT, reviewDate);
             }
 
             // Process paragraph cards
             for (int i = 0; i < paragraphPerDay && paragraphIndex < paragraphs.size(); i++, paragraphIndex++) {
                 Paragraph paragraph = paragraphs.get(paragraphIndex);
-                createCardWithStudyLog(userId, paragraphDeckResponse.getId(), CardType.PARAGRAPH, paragraph.getId(), Skill.DICTATION, reviewDate);
                 createCardWithStudyLog(userId, paragraphDeckResponse.getId(), CardType.PARAGRAPH, paragraph.getId(), Skill.FILL_IN_THE_BLANKS, reviewDate);
             }
 
             // Process sentence cards
             for (int i = 0; i < sentencePerDay && sentenceIndex < sentences.size(); i++, sentenceIndex++) {
                 Sentence sentence = sentences.get(sentenceIndex);
-                createCardWithStudyLog(userId, sentenceDeckResponse.getId(), CardType.SENTENCE, sentence.getId(), Skill.SENTENCE_ARRANGEMENT, reviewDate);
                 createCardWithStudyLog(userId, sentenceDeckResponse.getId(), CardType.SENTENCE, sentence.getId(), Skill.REPEAT, reviewDate);
-                createCardWithStudyLog(userId, sentenceDeckResponse.getId(), CardType.SENTENCE, sentence.getId(), Skill.JP_VI_TRANSLATION, reviewDate);
-                createCardWithStudyLog(userId, sentenceDeckResponse.getId(), CardType.SENTENCE, sentence.getId(), Skill.VI_JP_TRANSLATION, reviewDate);
             }
 
             // Process speaking question cards
@@ -244,26 +230,17 @@ public class LearningGoalServiceImpl implements LearningGoalService {
             T item = items.get(i);
             if (item instanceof Vocabulary) {
                 createCardWithStudyLog(userId, deckId, CardType.VOCABULARY, ((Vocabulary) item).getId(), null, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.VOCABULARY, ((Vocabulary) item).getId(), Skill.JP_VI_TRANSLATION, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.VOCABULARY, ((Vocabulary) item).getId(), Skill.VI_JP_TRANSLATION, targetDate);
                 createCardWithStudyLog(userId, deckId, CardType.VOCABULARY, ((Vocabulary) item).getId(), Skill.SENTENCE_ARRANGEMENT, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.VOCABULARY, ((Vocabulary) item).getId(), Skill.DICTATION, targetDate);
                 createCardWithStudyLog(userId, deckId, CardType.VOCABULARY, ((Vocabulary) item).getId(), Skill.REPEAT, targetDate);
             } else if (item instanceof Grammar) {
                 createCardWithStudyLog(userId, deckId, CardType.GRAMMAR, ((Grammar) item).getId(), null, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.GRAMMAR, ((Grammar) item).getId(), Skill.JP_VI_TRANSLATION, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.GRAMMAR, ((Grammar) item).getId(), Skill.VI_JP_TRANSLATION, targetDate);
                 createCardWithStudyLog(userId, deckId, CardType.GRAMMAR, ((Grammar) item).getId(), Skill.SENTENCE_ARRANGEMENT, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.GRAMMAR, ((Grammar) item).getId(), Skill.DICTATION, targetDate);
                 createCardWithStudyLog(userId, deckId, CardType.GRAMMAR, ((Grammar) item).getId(), Skill.REPEAT, targetDate);
             } else if (item instanceof Paragraph) {
-                createCardWithStudyLog(userId, deckId, CardType.PARAGRAPH, ((Paragraph) item).getId(), Skill.DICTATION, targetDate);
                 createCardWithStudyLog(userId, deckId, CardType.PARAGRAPH, ((Paragraph) item).getId(), Skill.FILL_IN_THE_BLANKS, targetDate);
             } else if (item instanceof Sentence) {
                 createCardWithStudyLog(userId, deckId, CardType.SENTENCE, ((Sentence) item).getId(), Skill.SENTENCE_ARRANGEMENT, targetDate);
                 createCardWithStudyLog(userId, deckId, CardType.SENTENCE, ((Sentence) item).getId(), Skill.REPEAT, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.SENTENCE, ((Sentence) item).getId(), Skill.JP_VI_TRANSLATION, targetDate);
-                createCardWithStudyLog(userId, deckId, CardType.SENTENCE, ((Sentence) item).getId(), Skill.VI_JP_TRANSLATION, targetDate);
             } else if (item instanceof SpeakingQuestion) {
                 createCardWithStudyLog(userId, deckId, CardType.SPEAKING_QUESTION, ((SpeakingQuestion) item).getId(), Skill.SPEAKING, targetDate);
             } else if (item instanceof FreeTalkTopic) {

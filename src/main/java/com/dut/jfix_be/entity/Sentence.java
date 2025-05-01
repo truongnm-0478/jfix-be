@@ -35,7 +35,7 @@ public class Sentence {
     private String vietnameseText;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "jlpt_level")
+    @Column(name = "level")
     @Builder.Default
     private JlptLevel level = JlptLevel.FREE;
 
