@@ -49,9 +49,6 @@ public class StudyLog {
     @Column(name = "last_review_date")
     private LocalDateTime lastReviewDate;
 
-    @Column(nullable = false)
-    private Integer performance;
-
     @Column(name = "create_date", nullable = false)
     @Builder.Default
     private LocalDateTime createDate = LocalDateTime.now();

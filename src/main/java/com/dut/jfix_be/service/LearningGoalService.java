@@ -7,4 +7,5 @@ public interface LearningGoalService {
     LearningGoalResponse createLearningGoal(LearningGoalRequest request);
     LearningGoalResponse getLearningGoal();
     boolean hasExistingGoal();
+    void setupInitialLearningDecks(Integer userId, LearningGoalResponse goal);
 }

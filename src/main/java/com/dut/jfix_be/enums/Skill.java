@@ -6,5 +6,6 @@ public enum Skill {
     SPEAKING,
     SENTENCE_ARRANGEMENT,
     FILL_IN_THE_BLANKS,
-    DICTATION;
+    DICTATION,
+    REPEAT;
 }
