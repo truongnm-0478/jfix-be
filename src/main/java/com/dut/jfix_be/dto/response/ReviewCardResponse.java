@@ -56,4 +56,6 @@ public class ReviewCardResponse {
     private String audioUrl;
     private String vietnameseText;
     private String japaneseText;
+
+    private UserMistakeHistoryDTO mistakeHistory;
 } 

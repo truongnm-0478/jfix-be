@@ -13,4 +13,7 @@ import com.dut.jfix_be.entity.StudyLog;
 public interface StudyLogRepository extends JpaRepository<StudyLog, Integer> {
     @Query("SELECT sl FROM StudyLog sl WHERE sl.userId = :userId AND sl.reviewDate >= :startDate AND sl.reviewDate < :endDate")
     List<StudyLog> findByUserIdAndReviewDate(Integer userId, LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT sl FROM StudyLog sl WHERE sl.userId = :userId AND sl.reviewDate <= :endDate")
+    List<StudyLog> findByUserIdAndReviewDateUpTo(Integer userId, LocalDateTime endDate);
 } 
