@@ -2,6 +2,11 @@ package com.dut.jfix_be.service;
 
 import java.util.List;
 
+import com.dut.jfix_be.dto.response.CardDifficultyDTO;
+import com.dut.jfix_be.dto.response.ErrorImprovementDTO;
+import com.dut.jfix_be.dto.response.ErrorRateDTO;
+import com.dut.jfix_be.dto.response.StudyHeatmapDTO;
+import com.dut.jfix_be.dto.response.TotalLearnedCardsDTO;
 import com.dut.jfix_be.dto.response.UserAchievementDTO;
 
 public interface UserAchievementService {
@@ -11,5 +16,11 @@ public interface UserAchievementService {
     List<UserAchievementDTO> getCurrentUserAchievements();
     void calculateAndSaveCurrentUserAchievements();
     List<UserAchievementDTO> calculateAndReturnCurrentUserAchievements();
+    List<StudyHeatmapDTO> getStudyHeatmap();
+    List<StudyHeatmapDTO> getCardsOverTime();
+    ErrorRateDTO getErrorRate();
+    List<ErrorImprovementDTO> getErrorImprovement();
+    TotalLearnedCardsDTO getTotalLearnedCards();
+    List<CardDifficultyDTO> getCardsByDifficulty();
 }
 

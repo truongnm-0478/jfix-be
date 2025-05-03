@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
@@ -12,13 +14,24 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.dut.jfix_be.dto.response.CardDifficultyDTO;
+import com.dut.jfix_be.dto.response.ErrorImprovementDTO;
+import com.dut.jfix_be.dto.response.ErrorRateDTO;
+import com.dut.jfix_be.dto.response.StudyHeatmapDTO;
+import com.dut.jfix_be.dto.response.TotalLearnedCardsDTO;
 import com.dut.jfix_be.dto.response.UserAchievementDTO;
+import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.StudyLog;
 import com.dut.jfix_be.entity.User;
 import com.dut.jfix_be.entity.UserAchievement;
+import com.dut.jfix_be.entity.UserDailyCardStat;
+import com.dut.jfix_be.entity.UserMistake;
 import com.dut.jfix_be.enums.AchievementType;
+import com.dut.jfix_be.repository.CardRepository;
 import com.dut.jfix_be.repository.StudyLogRepository;
 import com.dut.jfix_be.repository.UserAchievementRepository;
+import com.dut.jfix_be.repository.UserDailyCardStatRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.repository.UserRepository;
 import com.dut.jfix_be.service.UserAchievementService;
 
@@ -31,6 +44,9 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     private final StudyLogRepository studyLogRepository;
     private final UserRepository userRepository;
     private final MessageSource messageSource;
+    private final CardRepository cardRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserDailyCardStatRepository userDailyCardStatRepository;
 
     private Integer getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -125,5 +141,103 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     public List<UserAchievementDTO> calculateAndReturnAchievements(Integer userId) {
         calculateAndSaveAchievements(userId);
         return getUserAchievements(userId);
+    }
+
+    @Override
+    public List<StudyHeatmapDTO> getStudyHeatmap() {
+        Integer userId = getCurrentUserId();
+        List<UserDailyCardStat> stats = userDailyCardStatRepository.findAll().stream()
+            .filter(stat -> stat.getUserId().equals(userId))
+            .collect(Collectors.toList());
+        return stats.stream()
+            .map(stat -> StudyHeatmapDTO.builder().date(stat.getStatDate()).count(stat.getCardCount()).build())
+            .sorted(Comparator.comparing(StudyHeatmapDTO::getDate))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StudyHeatmapDTO> getCardsOverTime() {
+        return getStudyHeatmap(); // Có thể mở rộng nếu cần chi tiết hơn
+    }
+
+
+    @Override
+    public ErrorRateDTO getErrorRate() {
+        Integer userId = getCurrentUserId();
+        List<StudyLog> studyLogs = studyLogRepository.findByUserId(userId);
+        List<UserMistake> mistakes = userMistakeRepository.findAll()
+            .stream().filter(m -> m.getUserId().equals(userId)).collect(Collectors.toList());
+
+        // Tổng số thẻ đã học: chỉ lấy các cardId duy nhất có updateDate khác null
+        long totalCards = studyLogs.stream()
+            .filter(log -> log.getUpdateDate() != null)
+            .map(StudyLog::getCardId)
+            .distinct()
+            .count();
+        // Số thẻ mắc lỗi (cardId duy nhất trong UserMistake)
+        long errorCards = mistakes.stream().map(UserMistake::getCardId).distinct().count();
+        double errorRate = totalCards == 0 ? 0 : ((double) errorCards / totalCards);
+        return ErrorRateDTO.builder()
+            .correct((int)(totalCards - errorCards))
+            .incorrect((int)errorCards)
+            .errorRate(errorRate)
+            .build();
+    }
+
+    @Override
+    public List<ErrorImprovementDTO> getErrorImprovement() {
+        Integer userId = getCurrentUserId();
+        List<UserMistake> mistakes = userMistakeRepository.findAll()
+            .stream().filter(m -> m.getUserId().equals(userId)).collect(Collectors.toList());
+        Map<LocalDate, Long> map = mistakes.stream()
+            .collect(Collectors.groupingBy(m -> m.getIdentifiedAt().toLocalDate(), Collectors.counting()));
+        return map.entrySet().stream()
+            .map(e -> ErrorImprovementDTO.builder().date(e.getKey()).errorCount(e.getValue().intValue()).build())
+            .sorted(Comparator.comparing(ErrorImprovementDTO::getDate))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public TotalLearnedCardsDTO getTotalLearnedCards() {
+        Integer userId = getCurrentUserId();
+        int total = (int) studyLogRepository.findByUserId(userId).stream()
+            .filter(log -> log.getRepetition() != null && log.getRepetition() > 0)
+            .count();
+        return TotalLearnedCardsDTO.builder().total(total).build();
+    }
+
+    @Override
+    public List<CardDifficultyDTO> getCardsByDifficulty() {
+        Integer userId = getCurrentUserId();
+        List<Card> allCards = cardRepository.findAll();
+        List<StudyLog> logs = studyLogRepository.findByUserId(userId).stream()
+            .filter(log -> log.getUpdateDate() != null)
+            .collect(Collectors.toList());
+        // Tính easiness_factor trung bình cho mỗi cardId đã học
+        Map<Integer, Double> cardEasinessMap = logs.stream()
+            .collect(Collectors.groupingBy(
+                StudyLog::getCardId,
+                Collectors.averagingDouble(StudyLog::getEasinessFactor)
+            ));
+        int easy = 0, medium = 0, hard = 0;
+        for (double ef : cardEasinessMap.values()) {
+            if (ef < 2.0) hard++;
+            else if (ef < 2.3) medium++;
+            else easy++;
+        }
+        // Số thẻ đã học
+        Set<Integer> learnedCardIds = cardEasinessMap.keySet();
+        // Số thẻ chưa học = tổng số cardId - số đã học
+        int notLearned = (int) allCards.stream()
+            .map(Card::getId)
+            .filter(id -> !learnedCardIds.contains(id))
+            .count();
+        List<CardDifficultyDTO> result = List.of(
+            CardDifficultyDTO.builder().difficulty("Khó").count(hard).build(),
+            CardDifficultyDTO.builder().difficulty("Trung bình").count(medium).build(),
+            CardDifficultyDTO.builder().difficulty("Dễ").count(easy).build(),
+            CardDifficultyDTO.builder().difficulty("Chưa học").count(notLearned).build()
+        );
+        return result;
     }
 } 

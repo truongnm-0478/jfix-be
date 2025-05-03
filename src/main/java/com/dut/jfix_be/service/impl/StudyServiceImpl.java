@@ -26,6 +26,7 @@ import com.dut.jfix_be.entity.Sentence;
 import com.dut.jfix_be.entity.SpeakingQuestion;
 import com.dut.jfix_be.entity.StudyLog;
 import com.dut.jfix_be.entity.User;
+import com.dut.jfix_be.entity.UserDailyCardStat;
 import com.dut.jfix_be.entity.UserErrorAnalytics;
 import com.dut.jfix_be.entity.UserMistake;
 import com.dut.jfix_be.entity.Vocabulary;
@@ -40,6 +41,7 @@ import com.dut.jfix_be.repository.ParagraphRepository;
 import com.dut.jfix_be.repository.SentenceRepository;
 import com.dut.jfix_be.repository.SpeakingQuestionRepository;
 import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserDailyCardStatRepository;
 import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
 import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.repository.UserRepository;
@@ -65,6 +67,7 @@ public class StudyServiceImpl implements StudyService {
     private final UserMistakeRepository userMistakeRepository;
     private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
     private final CorrectionHistoryRepository correctionHistoryRepository;
+    private final UserDailyCardStatRepository userDailyCardStatRepository;
 
     private String getGroupKey(CardType type, Skill skill) {
         return skill != null ? type + ":" + skill : type.toString();
@@ -190,6 +193,23 @@ public class StudyServiceImpl implements StudyService {
         studyLog.setUpdateDate(java.time.LocalDateTime.now());
         studyLog.setUpdateBy(getCurrentUsername());
         studyLogRepository.save(studyLog);
+
+        // Cập nhật thống kê số thẻ đã review mỗi ngày
+        LocalDate statDate = LocalDate.now();
+        Integer userId = studyLog.getUserId();
+
+        // Lấy thống kê hiện tại
+        UserDailyCardStat stat = userDailyCardStatRepository
+            .findByUserIdAndStatDate(userId, statDate)
+            .orElse(UserDailyCardStat.builder()
+                .userId(userId)
+                .statDate(statDate)
+                .cardCount(0)
+                .build());
+
+        // Mỗi lần review đều tăng lên 1
+        stat.setCardCount(stat.getCardCount() + 1);
+        userDailyCardStatRepository.save(stat);
 
         // Nếu là thẻ tự luận thì lưu lại lỗi, phân tích lỗi, lịch sử sửa lỗi
         if (card.getType() == CardType.SENTENCE || card.getType() == CardType.PARAGRAPH || card.getType() == CardType.SPEAKING_QUESTION) {
