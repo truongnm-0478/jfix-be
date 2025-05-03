@@ -1,7 +1,8 @@
 package com.dut.jfix_be.dto;
 
-import lombok.Data;
 import org.springframework.http.HttpStatus;
+
+import lombok.Data;
 
 @Data
 public class ApiResponse<T> {

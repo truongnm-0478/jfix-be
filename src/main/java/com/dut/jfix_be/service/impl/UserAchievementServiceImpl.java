@@ -1,0 +1,129 @@
+package com.dut.jfix_be.service.impl;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import com.dut.jfix_be.dto.response.UserAchievementDTO;
+import com.dut.jfix_be.entity.StudyLog;
+import com.dut.jfix_be.entity.User;
+import com.dut.jfix_be.entity.UserAchievement;
+import com.dut.jfix_be.enums.AchievementType;
+import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserAchievementRepository;
+import com.dut.jfix_be.repository.UserRepository;
+import com.dut.jfix_be.service.UserAchievementService;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class UserAchievementServiceImpl implements UserAchievementService {
+    private final UserAchievementRepository userAchievementRepository;
+    private final StudyLogRepository studyLogRepository;
+    private final UserRepository userRepository;
+    private final MessageSource messageSource;
+
+    private Integer getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException(messageSource.getMessage("error.user.not.authenticated", null, LocaleContextHolder.getLocale()));
+        }
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException(messageSource.getMessage("error.user.not.found", new Object[]{username}, LocaleContextHolder.getLocale())));
+    }
+
+    @Override
+    public List<UserAchievementDTO> getCurrentUserAchievements() {
+        Integer userId = getCurrentUserId();
+        return getUserAchievements(userId);
+    }
+
+    @Override
+    public void calculateAndSaveCurrentUserAchievements() {
+        Integer userId = getCurrentUserId();
+        calculateAndSaveAchievements(userId);
+    }
+
+    @Override
+    public List<UserAchievementDTO> calculateAndReturnCurrentUserAchievements() {
+        Integer userId = getCurrentUserId();
+        return calculateAndReturnAchievements(userId);
+    }
+
+    @Override
+    public List<UserAchievementDTO> getUserAchievements(Integer userId) {
+        List<UserAchievement> achievements = userAchievementRepository.findByUserId(userId);
+        return achievements.stream()
+            .map(a -> UserAchievementDTO.builder()
+                .achievementType(a.getAchievementType())
+                .achievementDate(a.getAchievementDate())
+                .achievementValue(a.getAchievementValue())
+                .build())
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public void calculateAndSaveAchievements(Integer userId) {
+        // 1. Số thẻ đã hoàn thành: đếm số study log có repetition > 0 (tức là đã review ít nhất 1 lần)
+        List<StudyLog> logs = studyLogRepository.findByUserId(userId);
+        int completedCards = (int) logs.stream()
+            .filter(log -> log.getRepetition() != null && log.getRepetition() > 0)
+            .count();
+        saveOrUpdateAchievement(userId, AchievementType.LESSON_COMPLETED, completedCards);
+
+        // 2. Số ngày học liên tiếp (streak days)
+        int streakDays = calculateStreakDays(logs);
+        saveOrUpdateAchievement(userId, AchievementType.STREAK_DAYS, streakDays);
+    }
+
+    private int calculateStreakDays(List<StudyLog> logs) {
+        // Lấy danh sách ngày học (không trùng lặp)
+        List<LocalDate> studyDates = logs.stream()
+            .map(log -> log.getReviewDate().toLocalDate())
+            .distinct()
+            .sorted(Comparator.reverseOrder())
+            .collect(Collectors.toList());
+        int streak = 0;
+        LocalDate today = LocalDate.now();
+        for (LocalDate date : studyDates) {
+            if (date.equals(today.minusDays(streak))) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    }
+
+    private void saveOrUpdateAchievement(Integer userId, AchievementType type, int value) {
+        UserAchievement achievement = userAchievementRepository.findByUserIdAndAchievementType(userId, type)
+            .orElse(UserAchievement.builder()
+                .userId(userId)
+                .achievementType(type)
+                .createBy("SYSTEM")
+                .build());
+
+        achievement.setAchievementDate(LocalDateTime.now());
+        achievement.setAchievementValue(value);
+        achievement.setCreateDate(LocalDateTime.now());
+
+        userAchievementRepository.save(achievement);
+    }
+
+    @Override
+    public List<UserAchievementDTO> calculateAndReturnAchievements(Integer userId) {
+        calculateAndSaveAchievements(userId);
+        return getUserAchievements(userId);
+    }
+} 

@@ -16,4 +16,6 @@ public interface StudyLogRepository extends JpaRepository<StudyLog, Integer> {
 
     @Query("SELECT sl FROM StudyLog sl WHERE sl.userId = :userId AND sl.reviewDate <= :endDate")
     List<StudyLog> findByUserIdAndReviewDateUpTo(Integer userId, LocalDateTime endDate);
+
+    List<StudyLog> findByUserId(Integer userId);
 } 
