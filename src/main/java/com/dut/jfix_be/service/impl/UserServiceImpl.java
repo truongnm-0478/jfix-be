@@ -136,4 +136,22 @@ public class UserServiceImpl implements UserService {
                 .previousPage(previousPage)
                 .build();
     }
+
+    @Override
+    public UserAdminResponse getUserDetailForAdmin(Integer id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found.id", new Object[]{id}, LocaleContextHolder.getLocale())
+                ));
+        return UserAdminResponse.fromUser(user);
+    }
+
+    @Override
+    public UserResponse getUserDetail(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found", new Object[]{username}, LocaleContextHolder.getLocale())
+                ));
+        return UserResponse.fromUser(user);
+    }
 }

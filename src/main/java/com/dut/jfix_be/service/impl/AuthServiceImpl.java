@@ -2,24 +2,18 @@ package com.dut.jfix_be.service.impl;
 
 import java.time.LocalDateTime;
 
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.dut.jfix_be.config.JwtUtil;
-import com.dut.jfix_be.dto.request.ChangePasswordRequest;
 import com.dut.jfix_be.dto.request.LoginRequest;
 import com.dut.jfix_be.dto.request.RefreshTokenRequest;
 import com.dut.jfix_be.dto.request.UserRequest;
 import com.dut.jfix_be.dto.response.AuthResponse;
-import com.dut.jfix_be.dto.response.ChangePasswordResponse;
 import com.dut.jfix_be.dto.response.UserResponse;
 import com.dut.jfix_be.entity.User;
 import com.dut.jfix_be.enums.UserRole;
@@ -42,7 +36,6 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
-    private final MessageSource messageSource;
 
     @Override
     @Transactional

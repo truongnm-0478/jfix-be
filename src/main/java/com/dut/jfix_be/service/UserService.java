@@ -12,4 +12,6 @@ public interface UserService {
     ChangePasswordResponse changePassword(ChangePasswordRequest request);
     UserResponse updateProfile(UserUpdateRequest request);
     DataWithPageResponse<UserAdminResponse> getAllUsersForAdmin(String username, String email, UserRole role, Boolean isDeleted, int page, int size, String sortBy, String sortDir);
+    UserAdminResponse getUserDetailForAdmin(Integer id);
+    UserResponse getUserDetail(String username);
 }

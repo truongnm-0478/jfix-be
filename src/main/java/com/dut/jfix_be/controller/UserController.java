@@ -1,6 +1,9 @@
 package com.dut.jfix_be.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +38,12 @@ public class UserController {
     ) {
         UserResponse response = userService.updateProfile(request);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/detail")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserDetail(@AuthenticationPrincipal UserDetails userDetails) {
+        UserResponse user = userService.getUserDetail(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success(user));
     }
 
 }
