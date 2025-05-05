@@ -14,12 +14,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.dut.jfix_be.dto.response.CardDifficultyDTO;
-import com.dut.jfix_be.dto.response.ErrorImprovementDTO;
-import com.dut.jfix_be.dto.response.ErrorRateDTO;
-import com.dut.jfix_be.dto.response.StudyHeatmapDTO;
-import com.dut.jfix_be.dto.response.TotalLearnedCardsDTO;
-import com.dut.jfix_be.dto.response.UserAchievementDTO;
+import com.dut.jfix_be.dto.response.CardDifficultyResponse;
+import com.dut.jfix_be.dto.response.ErrorImprovementResponse;
+import com.dut.jfix_be.dto.response.ErrorRateResponse;
+import com.dut.jfix_be.dto.response.StudyHeatmapResponse;
+import com.dut.jfix_be.dto.response.TotalLearnedCardsResponse;
+import com.dut.jfix_be.dto.response.UserAchievementResponse;
 import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.StudyLog;
 import com.dut.jfix_be.entity.User;
@@ -60,7 +60,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     }
 
     @Override
-    public List<UserAchievementDTO> getCurrentUserAchievements() {
+    public List<UserAchievementResponse> getCurrentUserAchievements() {
         Integer userId = getCurrentUserId();
         return getUserAchievements(userId);
     }
@@ -72,16 +72,16 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     }
 
     @Override
-    public List<UserAchievementDTO> calculateAndReturnCurrentUserAchievements() {
+    public List<UserAchievementResponse> calculateAndReturnCurrentUserAchievements() {
         Integer userId = getCurrentUserId();
         return calculateAndReturnAchievements(userId);
     }
 
     @Override
-    public List<UserAchievementDTO> getUserAchievements(Integer userId) {
+    public List<UserAchievementResponse> getUserAchievements(Integer userId) {
         List<UserAchievement> achievements = userAchievementRepository.findByUserId(userId);
         return achievements.stream()
-            .map(a -> UserAchievementDTO.builder()
+            .map(a -> UserAchievementResponse.builder()
                 .achievementType(a.getAchievementType())
                 .achievementDate(a.getAchievementDate())
                 .achievementValue(a.getAchievementValue())
@@ -138,31 +138,31 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     }
 
     @Override
-    public List<UserAchievementDTO> calculateAndReturnAchievements(Integer userId) {
+    public List<UserAchievementResponse> calculateAndReturnAchievements(Integer userId) {
         calculateAndSaveAchievements(userId);
         return getUserAchievements(userId);
     }
 
     @Override
-    public List<StudyHeatmapDTO> getStudyHeatmap() {
+    public List<StudyHeatmapResponse> getStudyHeatmap() {
         Integer userId = getCurrentUserId();
         List<UserDailyCardStat> stats = userDailyCardStatRepository.findAll().stream()
             .filter(stat -> stat.getUserId().equals(userId))
             .collect(Collectors.toList());
         return stats.stream()
-            .map(stat -> StudyHeatmapDTO.builder().date(stat.getStatDate()).count(stat.getCardCount()).build())
-            .sorted(Comparator.comparing(StudyHeatmapDTO::getDate))
+            .map(stat -> StudyHeatmapResponse.builder().date(stat.getStatDate()).count(stat.getCardCount()).build())
+            .sorted(Comparator.comparing(StudyHeatmapResponse::getDate))
             .collect(Collectors.toList());
     }
 
     @Override
-    public List<StudyHeatmapDTO> getCardsOverTime() {
+    public List<StudyHeatmapResponse> getCardsOverTime() {
         return getStudyHeatmap(); // Có thể mở rộng nếu cần chi tiết hơn
     }
 
 
     @Override
-    public ErrorRateDTO getErrorRate() {
+    public ErrorRateResponse getErrorRate() {
         Integer userId = getCurrentUserId();
         List<StudyLog> studyLogs = studyLogRepository.findByUserId(userId);
         List<UserMistake> mistakes = userMistakeRepository.findAll()
@@ -177,7 +177,7 @@ public class UserAchievementServiceImpl implements UserAchievementService {
         // Số thẻ mắc lỗi (cardId duy nhất trong UserMistake)
         long errorCards = mistakes.stream().map(UserMistake::getCardId).distinct().count();
         double errorRate = totalCards == 0 ? 0 : ((double) errorCards / totalCards);
-        return ErrorRateDTO.builder()
+        return ErrorRateResponse.builder()
             .correct((int)(totalCards - errorCards))
             .incorrect((int)errorCards)
             .errorRate(errorRate)
@@ -185,29 +185,29 @@ public class UserAchievementServiceImpl implements UserAchievementService {
     }
 
     @Override
-    public List<ErrorImprovementDTO> getErrorImprovement() {
+    public List<ErrorImprovementResponse> getErrorImprovement() {
         Integer userId = getCurrentUserId();
         List<UserMistake> mistakes = userMistakeRepository.findAll()
             .stream().filter(m -> m.getUserId().equals(userId)).collect(Collectors.toList());
         Map<LocalDate, Long> map = mistakes.stream()
             .collect(Collectors.groupingBy(m -> m.getIdentifiedAt().toLocalDate(), Collectors.counting()));
         return map.entrySet().stream()
-            .map(e -> ErrorImprovementDTO.builder().date(e.getKey()).errorCount(e.getValue().intValue()).build())
-            .sorted(Comparator.comparing(ErrorImprovementDTO::getDate))
+            .map(e -> ErrorImprovementResponse.builder().date(e.getKey()).errorCount(e.getValue().intValue()).build())
+            .sorted(Comparator.comparing(ErrorImprovementResponse::getDate))
             .collect(Collectors.toList());
     }
 
     @Override
-    public TotalLearnedCardsDTO getTotalLearnedCards() {
+    public TotalLearnedCardsResponse getTotalLearnedCards() {
         Integer userId = getCurrentUserId();
         int total = (int) studyLogRepository.findByUserId(userId).stream()
             .filter(log -> log.getRepetition() != null && log.getRepetition() > 0)
             .count();
-        return TotalLearnedCardsDTO.builder().total(total).build();
+        return TotalLearnedCardsResponse.builder().total(total).build();
     }
 
     @Override
-    public List<CardDifficultyDTO> getCardsByDifficulty() {
+    public List<CardDifficultyResponse> getCardsByDifficulty() {
         Integer userId = getCurrentUserId();
         List<Card> allCards = cardRepository.findAll();
         List<StudyLog> logs = studyLogRepository.findByUserId(userId).stream()
@@ -232,11 +232,11 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             .map(Card::getId)
             .filter(id -> !learnedCardIds.contains(id))
             .count();
-        List<CardDifficultyDTO> result = List.of(
-            CardDifficultyDTO.builder().difficulty("Khó").count(hard).build(),
-            CardDifficultyDTO.builder().difficulty("Trung bình").count(medium).build(),
-            CardDifficultyDTO.builder().difficulty("Dễ").count(easy).build(),
-            CardDifficultyDTO.builder().difficulty("Chưa học").count(notLearned).build()
+        List<CardDifficultyResponse> result = List.of(
+            CardDifficultyResponse.builder().difficulty("Khó").count(hard).build(),
+            CardDifficultyResponse.builder().difficulty("Trung bình").count(medium).build(),
+            CardDifficultyResponse.builder().difficulty("Dễ").count(easy).build(),
+            CardDifficultyResponse.builder().difficulty("Chưa học").count(notLearned).build()
         );
         return result;
     }

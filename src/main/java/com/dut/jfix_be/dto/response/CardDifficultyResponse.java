@@ -1,7 +1,5 @@
 package com.dut.jfix_be.dto.response;
 
-import java.time.LocalDate;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorImprovementDTO {
-    private LocalDate date;
-    private int errorCount;
+public class CardDifficultyResponse {
+    private String difficulty;
+    private int count;
 } 

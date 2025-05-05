@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.dut.jfix_be.dto.request.StudyLogRequest;
 import com.dut.jfix_be.dto.response.ReviewCardResponse;
 import com.dut.jfix_be.dto.response.ReviewDeckResponse;
+import com.dut.jfix_be.dto.response.UserMistakeHistoryResponse;
 import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.CorrectionHistory;
 import com.dut.jfix_be.entity.FreeTalkTopic;
@@ -420,8 +421,8 @@ public class StudyServiceImpl implements StudyService {
                 UserErrorAnalytics analytics = userErrorAnalyticsRepository.findByUserIdAndCardId(log.getUserId(), card.getId()).orElse(null);
                 // Lấy danh sách correction histories
                 List<CorrectionHistory> histories = correctionHistoryRepository.findAllByUserMistakeId(mistake.getId());
-                List<com.dut.jfix_be.dto.response.UserMistakeHistoryDTO.CorrectionHistoryDTO> historyDTOs = histories.stream().map(h ->
-                    com.dut.jfix_be.dto.response.UserMistakeHistoryDTO.CorrectionHistoryDTO.builder()
+                List<UserMistakeHistoryResponse.CorrectionHistoryResponse> historyDTOs = histories.stream().map(h ->
+                    UserMistakeHistoryResponse.CorrectionHistoryResponse.builder()
                         .correctionAttempt(h.getCorrectionAttempt())
                         .isCorrect(h.getIsCorrect())
                         .attemptNumber(h.getAttemptNumber())
@@ -430,7 +431,7 @@ public class StudyServiceImpl implements StudyService {
                 ).collect(Collectors.toList());
                 // Build DTO
                 responseBuilder.mistakeHistory(
-                    com.dut.jfix_be.dto.response.UserMistakeHistoryDTO.builder()
+                    UserMistakeHistoryResponse.builder()
                         .userInput(mistake.getUserInput())
                         .correctAnswer(mistake.getCorrectAnswer())
                         .identifiedAt(mistake.getIdentifiedAt())

@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CardDifficultyDTO {
-    private String difficulty;
-    private int count;
+public class TotalLearnedCardsResponse {
+    private int total;
 } 

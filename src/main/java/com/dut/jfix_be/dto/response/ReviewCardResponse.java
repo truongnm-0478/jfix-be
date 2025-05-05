@@ -57,5 +57,5 @@ public class ReviewCardResponse {
     private String vietnameseText;
     private String japaneseText;
 
-    private UserMistakeHistoryDTO mistakeHistory;
+    private UserMistakeHistoryResponse mistakeHistory;
 } 

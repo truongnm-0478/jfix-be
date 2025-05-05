@@ -8,12 +8,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.dut.jfix_be.dto.response.CardDifficultyDTO;
-import com.dut.jfix_be.dto.response.ErrorImprovementDTO;
-import com.dut.jfix_be.dto.response.ErrorRateDTO;
-import com.dut.jfix_be.dto.response.StudyHeatmapDTO;
-import com.dut.jfix_be.dto.response.TotalLearnedCardsDTO;
-import com.dut.jfix_be.dto.response.UserAchievementDTO;
+import com.dut.jfix_be.dto.response.CardDifficultyResponse;
+import com.dut.jfix_be.dto.response.ErrorImprovementResponse;
+import com.dut.jfix_be.dto.response.ErrorRateResponse;
+import com.dut.jfix_be.dto.response.StudyHeatmapResponse;
+import com.dut.jfix_be.dto.response.TotalLearnedCardsResponse;
+import com.dut.jfix_be.dto.response.UserAchievementResponse;
 import com.dut.jfix_be.service.UserAchievementService;
 
 import lombok.RequiredArgsConstructor;
@@ -25,12 +25,12 @@ public class UserAchievementController {
     private final UserAchievementService userAchievementService;
 
     @GetMapping
-    public ResponseEntity<List<UserAchievementDTO>> getUserAchievements() {
+    public ResponseEntity<List<UserAchievementResponse>> getUserAchievements() {
         return ResponseEntity.ok(userAchievementService.getCurrentUserAchievements());
     }
 
     @PostMapping("/calculate")
-    public ResponseEntity<List<UserAchievementDTO>> calculateAndGetAchievements() {
+    public ResponseEntity<List<UserAchievementResponse>> calculateAndGetAchievements() {
         return ResponseEntity.ok(userAchievementService.calculateAndReturnCurrentUserAchievements());
     }
 
@@ -39,7 +39,7 @@ public class UserAchievementController {
      * Nghiệp vụ: Trả về danh sách ngày và số lượng thẻ đã học/ngày
      */
     @GetMapping("/study-heatmap")
-    public ResponseEntity<List<StudyHeatmapDTO>> getStudyHeatmap() {
+    public ResponseEntity<List<StudyHeatmapResponse>> getStudyHeatmap() {
         return ResponseEntity.ok(userAchievementService.getStudyHeatmap());
     }
 
@@ -48,7 +48,7 @@ public class UserAchievementController {
      * Nghiệp vụ: Trả về danh sách ngày và số lượng thẻ đã học/ngày
      */
     @GetMapping("/cards-over-time")
-    public ResponseEntity<List<StudyHeatmapDTO>> getCardsOverTime() {
+    public ResponseEntity<List<StudyHeatmapResponse>> getCardsOverTime() {
         return ResponseEntity.ok(userAchievementService.getCardsOverTime());
     }
 
@@ -57,7 +57,7 @@ public class UserAchievementController {
      * Nghiệp vụ: Trả về số lần đúng, số lần sai, tỉ lệ lỗi
      */
     @GetMapping("/error-rate")
-    public ResponseEntity<ErrorRateDTO> getErrorRate() {
+    public ResponseEntity<ErrorRateResponse> getErrorRate() {
         return ResponseEntity.ok(userAchievementService.getErrorRate());
     }
 
@@ -66,7 +66,7 @@ public class UserAchievementController {
      * Nghiệp vụ: Trả về số lỗi mắc phải theo từng ngày
      */
     @GetMapping("/error-improvement")
-    public ResponseEntity<List<ErrorImprovementDTO>> getErrorImprovement() {
+    public ResponseEntity<List<ErrorImprovementResponse>> getErrorImprovement() {
         return ResponseEntity.ok(userAchievementService.getErrorImprovement());
     }
 
@@ -75,7 +75,7 @@ public class UserAchievementController {
      * Nghiệp vụ: Trả về tổng số thẻ đã học của user
      */
     @GetMapping("/total-learned-cards")
-    public ResponseEntity<TotalLearnedCardsDTO> getTotalLearnedCards() {
+    public ResponseEntity<TotalLearnedCardsResponse> getTotalLearnedCards() {
         return ResponseEntity.ok(userAchievementService.getTotalLearnedCards());
     }
 
@@ -83,7 +83,7 @@ public class UserAchievementController {
      * API lấy dữ liệu vẽ biểu đồ thống kê số lượng thẻ theo độ khó (bar chart)
      */
     @GetMapping("/cards-by-difficulty")
-    public ResponseEntity<List<CardDifficultyDTO>> getCardsByDifficulty() {
+    public ResponseEntity<List<CardDifficultyResponse>> getCardsByDifficulty() {
         return ResponseEntity.ok(userAchievementService.getCardsByDifficulty());
     }
 } 

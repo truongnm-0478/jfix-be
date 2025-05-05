@@ -1,12 +1,11 @@
 package com.dut.jfix_be.service;
 
-import com.dut.jfix_be.dto.request.UserRequest;
-import com.dut.jfix_be.dto.response.UserResponse;
 import com.dut.jfix_be.dto.request.LoginRequest;
 import com.dut.jfix_be.dto.request.RefreshTokenRequest;
+import com.dut.jfix_be.dto.request.UserRequest;
 import com.dut.jfix_be.dto.response.AuthResponse;
-import com.dut.jfix_be.entity.User;
-import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.dto.response.UserResponse;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 public interface AuthService {

@@ -2,25 +2,25 @@ package com.dut.jfix_be.service;
 
 import java.util.List;
 
-import com.dut.jfix_be.dto.response.CardDifficultyDTO;
-import com.dut.jfix_be.dto.response.ErrorImprovementDTO;
-import com.dut.jfix_be.dto.response.ErrorRateDTO;
-import com.dut.jfix_be.dto.response.StudyHeatmapDTO;
-import com.dut.jfix_be.dto.response.TotalLearnedCardsDTO;
-import com.dut.jfix_be.dto.response.UserAchievementDTO;
+import com.dut.jfix_be.dto.response.CardDifficultyResponse;
+import com.dut.jfix_be.dto.response.ErrorImprovementResponse;
+import com.dut.jfix_be.dto.response.ErrorRateResponse;
+import com.dut.jfix_be.dto.response.StudyHeatmapResponse;
+import com.dut.jfix_be.dto.response.TotalLearnedCardsResponse;
+import com.dut.jfix_be.dto.response.UserAchievementResponse;
 
 public interface UserAchievementService {
-    List<UserAchievementDTO> getUserAchievements(Integer userId);
+    List<UserAchievementResponse> getUserAchievements(Integer userId);
     void calculateAndSaveAchievements(Integer userId);
-    List<UserAchievementDTO> calculateAndReturnAchievements(Integer userId);
-    List<UserAchievementDTO> getCurrentUserAchievements();
+    List<UserAchievementResponse> calculateAndReturnAchievements(Integer userId);
+    List<UserAchievementResponse> getCurrentUserAchievements();
     void calculateAndSaveCurrentUserAchievements();
-    List<UserAchievementDTO> calculateAndReturnCurrentUserAchievements();
-    List<StudyHeatmapDTO> getStudyHeatmap();
-    List<StudyHeatmapDTO> getCardsOverTime();
-    ErrorRateDTO getErrorRate();
-    List<ErrorImprovementDTO> getErrorImprovement();
-    TotalLearnedCardsDTO getTotalLearnedCards();
-    List<CardDifficultyDTO> getCardsByDifficulty();
+    List<UserAchievementResponse> calculateAndReturnCurrentUserAchievements();
+    List<StudyHeatmapResponse> getStudyHeatmap();
+    List<StudyHeatmapResponse> getCardsOverTime();
+    ErrorRateResponse getErrorRate();
+    List<ErrorImprovementResponse> getErrorImprovement();
+    TotalLearnedCardsResponse getTotalLearnedCards();
+    List<CardDifficultyResponse> getCardsByDifficulty();
 }
 

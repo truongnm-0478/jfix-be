@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserAchievementDTO {
+public class UserAchievementResponse {
     private AchievementType achievementType;
     private LocalDateTime achievementDate;
     private Integer achievementValue;

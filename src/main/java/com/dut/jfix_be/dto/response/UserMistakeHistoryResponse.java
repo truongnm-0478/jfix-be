@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserMistakeHistoryDTO {
+public class UserMistakeHistoryResponse {
     // Thông tin lần mắc lỗi đầu tiên
     private String userInput;
     private String correctAnswer;
@@ -25,13 +25,13 @@ public class UserMistakeHistoryDTO {
     private LocalDateTime lastOccurrence;
 
     // Danh sách các lần sửa lỗi
-    private List<CorrectionHistoryDTO> correctionHistories;
+    private List<CorrectionHistoryResponse> correctionHistories;
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CorrectionHistoryDTO {
+    public static class CorrectionHistoryResponse {
         private String correctionAttempt;
         private Boolean isCorrect;
         private Integer attemptNumber;
