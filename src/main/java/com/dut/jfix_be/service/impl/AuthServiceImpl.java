@@ -2,6 +2,8 @@ package com.dut.jfix_be.service.impl;
 
 import java.time.LocalDateTime;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,6 +38,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final MessageSource messageSource;
 
     @Override
     @Transactional
@@ -81,7 +84,9 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("error.user.notfound"));
 
         if (user.isDeleted()) {
-            throw new IllegalStateException("error.user.deleted");
+            throw new IllegalStateException(
+                messageSource.getMessage("error.user.deleted", null, LocaleContextHolder.getLocale())
+            );
         }
 
         user.setRefreshToken(refreshToken);

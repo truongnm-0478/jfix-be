@@ -14,4 +14,6 @@ public interface UserService {
     DataWithPageResponse<UserAdminResponse> getAllUsersForAdmin(String username, String email, UserRole role, Boolean isDeleted, int page, int size, String sortBy, String sortDir);
     UserAdminResponse getUserDetailForAdmin(Integer id);
     UserResponse getUserDetail(String username);
+    String lockUser(Integer id, String adminUsername);
+    String unlockUser(Integer id, String adminUsername);
 }

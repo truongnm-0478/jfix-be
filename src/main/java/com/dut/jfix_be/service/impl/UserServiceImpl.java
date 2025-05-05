@@ -154,4 +154,46 @@ public class UserServiceImpl implements UserService {
                 ));
         return UserResponse.fromUser(user);
     }
+
+    @Override
+    @Transactional
+    public String lockUser(Integer id, String adminUsername) {
+        User admin = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found", new Object[]{adminUsername}, LocaleContextHolder.getLocale())
+                ));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found.id", new Object[]{id}, LocaleContextHolder.getLocale())
+                ));
+        if (user.getRole() == UserRole.ADMIN) {
+            throw new IllegalArgumentException(messageSource.getMessage("error.cannot.lock.admin", null, LocaleContextHolder.getLocale()));
+        }
+        user.setDeleted(true);
+        user.setUpdateBy(adminUsername);
+        user.setUpdateDate(LocalDateTime.now());
+        userRepository.save(user);
+        return messageSource.getMessage("success.user.locked", new Object[]{user.getUsername()}, LocaleContextHolder.getLocale());
+    }
+
+    @Override
+    @Transactional
+    public String unlockUser(Integer id, String adminUsername) {
+        User admin = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found", new Object[]{adminUsername}, LocaleContextHolder.getLocale())
+                ));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found.id", new Object[]{id}, LocaleContextHolder.getLocale())
+                ));
+        if (user.getRole() == UserRole.ADMIN) {
+            throw new IllegalArgumentException(messageSource.getMessage("error.cannot.unlock.admin", null, LocaleContextHolder.getLocale()));
+        }
+        user.setDeleted(false);
+        user.setUpdateBy(adminUsername);
+        user.setUpdateDate(LocalDateTime.now());
+        userRepository.save(user);
+        return messageSource.getMessage("success.user.unlocked", new Object[]{user.getUsername()}, LocaleContextHolder.getLocale());
+    }
 }
