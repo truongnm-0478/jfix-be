@@ -37,7 +37,7 @@ public class VocabularyServiceImpl implements VocabularyService {
     @Override
     public VocabularyResponse findById(Integer id) {
         Vocabulary vocabulary = vocabularyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.not.found", id));
         return mapToResponse(vocabulary);
     }
 
@@ -122,7 +122,7 @@ public class VocabularyServiceImpl implements VocabularyService {
     @Override
     public VocabularyAdminResponse getVocabularyDetailForAdmin(Integer id) {
         Vocabulary vocabulary = vocabularyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.not.found", id));
         return VocabularyAdminResponse.fromVocabulary(vocabulary);
     }
 
@@ -155,7 +155,7 @@ public class VocabularyServiceImpl implements VocabularyService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String adminUsername = auth != null ? auth.getName() : "admin";
         Vocabulary vocabulary = vocabularyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.not.found", id));
         vocabulary.setWord(request.getWord());
         vocabulary.setReading(request.getReading());
         vocabulary.setMeaning(request.getMeaning());
@@ -182,7 +182,7 @@ public class VocabularyServiceImpl implements VocabularyService {
     @Override
     public void deleteVocabularyForAdmin(Integer id) {
         Vocabulary vocabulary = vocabularyRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.notfound"));
+                .orElseThrow(() -> new ResourceNotFoundException("error.vocabulary.not.found", id));
         String audioUrl = vocabulary.getAudio();
         if (audioUrl != null && !audioUrl.isEmpty() && audioUrl.contains("cloudinary")) {
             cloudinaryService.deleteAudio(audioUrl);

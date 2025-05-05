@@ -1,4 +1,4 @@
-package com.dut.jfix_be.controller;
+package com.dut.jfix_be.controller.admin;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
