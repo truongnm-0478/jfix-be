@@ -21,3 +21,8 @@ jwt:
   refresh-token-secret: Tg2W/71ZhTHiFuIcCk9EHnJ4wMLM/RpuqCWbJQv4kuyl0TjQLFOrRfU3aVskikVlSII4h3AyUaGriM7ww+s8Yg==
   access-token-expiration: 604800000  # 15p (900000ms)
   refresh-token-expiration: 604800000  # 7d (604800000ms)
+
+cloudinary:
+  cloud_name: dshdadptl
+  api_key: 923674831294794
+  api_secret: lo49vH-pv35Qghq2dJx6ezbaXJk
