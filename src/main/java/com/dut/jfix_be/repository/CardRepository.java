@@ -19,4 +19,6 @@ public interface CardRepository extends JpaRepository<Card, Integer> {
     
     @Query("SELECT c FROM Card c WHERE c.deckId = :deckId AND c.type = :type AND c.skill = :skill AND c.deleteDate IS NULL")
     List<Card> findActiveByDeckIdAndTypeAndSkill(Integer deckId, CardType type, Skill skill);
+
+    List<Card> findByTypeAndItemId(CardType type, Integer itemId);
 }

@@ -53,4 +53,30 @@ public class CloudinaryServiceImpl implements CloudinaryService {
             throw new RuntimeException("Delete image failed", e);
         }
     }
+
+    @Override
+    public String uploadAudio(MultipartFile file) {
+        try {
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("resource_type", "auto"));
+            return uploadResult.get("secure_url").toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Upload audio failed", e);
+        }
+    }
+
+    @Override
+    public void deleteAudio(String audioUrl) {
+        if (audioUrl == null || audioUrl.isEmpty()) return;
+        try {
+            String[] parts = audioUrl.split("/upload/");
+            if (parts.length < 2) return;
+            String publicIdWithVersion = parts[1];
+            String publicId = publicIdWithVersion.replaceAll("^v[0-9]+/", "");
+            int dotIdx = publicId.lastIndexOf('.');
+            if (dotIdx > 0) publicId = publicId.substring(0, dotIdx);
+            cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "video"));
+        } catch (Exception e) {
+            throw new RuntimeException("Delete audio failed", e);
+        }
+    }
 } 

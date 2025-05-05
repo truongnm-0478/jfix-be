@@ -18,4 +18,6 @@ public interface StudyLogRepository extends JpaRepository<StudyLog, Integer> {
     List<StudyLog> findByUserIdAndReviewDateUpTo(Integer userId, LocalDateTime endDate);
 
     List<StudyLog> findByUserId(Integer userId);
+
+    void deleteAllByCardId(Integer cardId);
 } 
