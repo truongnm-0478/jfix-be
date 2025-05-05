@@ -1,6 +1,9 @@
 package com.dut.jfix_be.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -9,11 +12,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.ChangePasswordRequest;
 import com.dut.jfix_be.dto.request.UserUpdateRequest;
 import com.dut.jfix_be.dto.response.ChangePasswordResponse;
+import com.dut.jfix_be.dto.response.UserAdminResponse;
 import com.dut.jfix_be.dto.response.UserResponse;
 import com.dut.jfix_be.entity.User;
+import com.dut.jfix_be.enums.UserRole;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
 import com.dut.jfix_be.repository.UserRepository;
 import com.dut.jfix_be.service.CloudinaryService;
@@ -91,5 +97,43 @@ public class UserServiceImpl implements UserService {
         user.setUpdateBy(username);
         userRepository.save(user);
         return UserResponse.fromUser(user);
+    }
+
+    @Override
+    public DataWithPageResponse<UserAdminResponse> getAllUsersForAdmin(String username, String email, UserRole role, Boolean isDeleted, int page, int size, String sortBy, String sortDir) {
+        List<User> filtered = userRepository.findAll().stream()
+                .filter(u -> username == null || u.getUsername().toLowerCase().contains(username.toLowerCase()))
+                .filter(u -> email == null || u.getEmail().toLowerCase().contains(email.toLowerCase()))
+                .filter(u -> role == null || u.getRole() == role)
+                .filter(u -> isDeleted == null || u.isDeleted() == isDeleted)
+                .sorted((u1, u2) -> {
+                    Comparator<User> comparator;
+                    switch (sortBy) {
+                        case "username": comparator = Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER); break;
+                        case "email": comparator = Comparator.comparing(User::getEmail, String.CASE_INSENSITIVE_ORDER); break;
+                        case "name": comparator = Comparator.comparing(User::getName, String.CASE_INSENSITIVE_ORDER); break;
+                        case "role": comparator = Comparator.comparing(u -> u.getRole().name()); break;
+                        case "isDeleted": comparator = Comparator.comparing(User::isDeleted); break;
+                        case "id": default: comparator = Comparator.comparing(User::getId); break;
+                    }
+                    return "desc".equalsIgnoreCase(sortDir) ? comparator.reversed().compare(u1, u2) : comparator.compare(u1, u2);
+                })
+                .collect(Collectors.toList());
+        int total = filtered.size();
+        int totalPages = (int) Math.ceil((double) total / size);
+        int fromIndex = Math.max(0, page * size);
+        int toIndex = Math.min(filtered.size(), fromIndex + size);
+        List<UserAdminResponse> pageData = (fromIndex > toIndex) ? List.of() : filtered.subList(fromIndex, toIndex).stream()
+                .map(UserAdminResponse::fromUser)
+                .collect(Collectors.toList());
+        Integer nextPage = (page + 1 < totalPages) ? page + 1 : null;
+        Integer previousPage = (page > 0) ? page - 1 : null;
+        return DataWithPageResponse.<UserAdminResponse>builder()
+                .data(pageData)
+                .totalRecords(total)
+                .totalPages(totalPages)
+                .nextPage(nextPage)
+                .previousPage(previousPage)
+                .build();
     }
 }
