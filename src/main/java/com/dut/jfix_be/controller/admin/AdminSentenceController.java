@@ -24,11 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin/sentences")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminSentenceController {
     private final SentenceService sentenceService;
 
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<SentenceAdminResponse>>> getAllSentencesForAdmin(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "level", required = false) JlptLevel level,
@@ -42,28 +42,24 @@ public class AdminSentenceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SentenceAdminResponse>> getSentenceDetailForAdmin(@PathVariable Integer id) {
         SentenceAdminResponse sentence = sentenceService.getSentenceDetailForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(sentence));
     }
 
-    @PostMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
     public ResponseEntity<ApiResponse<SentenceAdminResponse>> createSentenceForAdmin(@ModelAttribute SentenceRequest request) {
         SentenceAdminResponse created = sentenceService.createSentenceForAdmin(request);
         return ResponseEntity.ok(ApiResponse.success(created));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SentenceAdminResponse>> updateSentenceForAdmin(@PathVariable Integer id, @ModelAttribute SentenceRequest request) {
         SentenceAdminResponse updated = sentenceService.updateSentenceForAdmin(id, request);
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteSentenceForAdmin(@PathVariable Integer id) {
         sentenceService.deleteSentenceForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(null));

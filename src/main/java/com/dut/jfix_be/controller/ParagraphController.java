@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class ParagraphController {
     private final ParagraphService paragraphService;
 
-    @GetMapping("")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<ParagraphResponse>>> getAllParagraphs(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "level", required = false) JlptLevel level,

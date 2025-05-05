@@ -40,7 +40,7 @@ public class GrammarController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    @GetMapping("")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<GrammarResponse>>> getAllGrammars(
         @RequestParam(value = "keyword", required = false) String keyword,
         @RequestParam(value = "level", required = false) JlptLevel level,

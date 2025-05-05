@@ -24,11 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin/grammars")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminGrammarController {
     private final GrammarService grammarService;
 
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<GrammarAdminResponse>>> getAllGrammarsForAdmin(
         @RequestParam(value = "keyword", required = false) String keyword,
         @RequestParam(value = "level", required = false) JlptLevel level,
@@ -42,28 +42,24 @@ public class AdminGrammarController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<GrammarAdminResponse>> getGrammarDetailForAdmin(@PathVariable Integer id) {
         GrammarAdminResponse grammar = grammarService.getGrammarDetailForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(grammar));
     }
 
-    @PostMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
     public ResponseEntity<ApiResponse<GrammarAdminResponse>> createGrammarForAdmin(@RequestBody GrammarRequest request) {
         GrammarAdminResponse created = grammarService.createGrammarForAdmin(request);
         return ResponseEntity.ok(ApiResponse.success(created));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<GrammarAdminResponse>> updateGrammarForAdmin(@PathVariable Integer id, @RequestBody GrammarRequest request) {
         GrammarAdminResponse updated = grammarService.updateGrammarForAdmin(id, request);
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteGrammarForAdmin(@PathVariable Integer id) {
         grammarService.deleteGrammarForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(null));

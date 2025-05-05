@@ -22,11 +22,11 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
     private final UserService userService;
 
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<UserAdminResponse>>> getAllUsers(
         @RequestParam(value = "username", required = false) String username,
         @RequestParam(value = "email", required = false) String email,
@@ -42,21 +42,18 @@ public class AdminUserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserAdminResponse>> getUserDetail(@PathVariable Integer id) {
         UserAdminResponse user = userService.getUserDetailForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
     @PatchMapping("/{id}/lock")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> lockUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails adminDetails) {
         String result = userService.lockUser(id, adminDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @PatchMapping("/{id}/unlock")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> unlockUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails adminDetails) {
         String result = userService.unlockUser(id, adminDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(result));

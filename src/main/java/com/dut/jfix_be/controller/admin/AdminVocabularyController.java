@@ -24,11 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin/vocabularies")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminVocabularyController {
     private final VocabularyService vocabularyService;
 
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<VocabularyAdminResponse>>> getAllVocabulariesForAdmin(
         @RequestParam(value = "keyword", required = false) String keyword,
         @RequestParam(value = "level", required = false) JlptLevel level,
@@ -50,22 +50,19 @@ public class AdminVocabularyController {
         return ResponseEntity.ok(ApiResponse.success(vocab));
     }
 
-    @PostMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
     public ResponseEntity<ApiResponse<VocabularyAdminResponse>> createVocabularyForAdmin(@ModelAttribute VocabularyAdminRequest request) {
         VocabularyAdminResponse created = vocabularyService.createVocabularyForAdmin(request);
         return ResponseEntity.ok(ApiResponse.success(created));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<VocabularyAdminResponse>> updateVocabularyForAdmin(@PathVariable Integer id, @ModelAttribute VocabularyAdminRequest request) {
         VocabularyAdminResponse updated = vocabularyService.updateVocabularyForAdmin(id, request);
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteVocabularyForAdmin(@PathVariable Integer id) {
         vocabularyService.deleteVocabularyForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(null));

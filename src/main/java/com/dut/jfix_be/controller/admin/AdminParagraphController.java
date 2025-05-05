@@ -24,11 +24,11 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/admin/paragraphs")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminParagraphController {
     private final ParagraphService paragraphService;
 
-    @GetMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
     public ResponseEntity<ApiResponse<DataWithPageResponse<ParagraphAdminResponse>>> getAllParagraphsForAdmin(
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "level", required = false) JlptLevel level,
@@ -42,28 +42,24 @@ public class AdminParagraphController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ParagraphAdminResponse>> getParagraphDetailForAdmin(@PathVariable Integer id) {
         ParagraphAdminResponse paragraph = paragraphService.getParagraphDetailForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(paragraph));
     }
 
-    @PostMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
     public ResponseEntity<ApiResponse<ParagraphAdminResponse>> createParagraphForAdmin(@ModelAttribute ParagraphRequest request) {
         ParagraphAdminResponse created = paragraphService.createParagraphForAdmin(request);
         return ResponseEntity.ok(ApiResponse.success(created));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ParagraphAdminResponse>> updateParagraphForAdmin(@PathVariable Integer id, @ModelAttribute ParagraphRequest request) {
         ParagraphAdminResponse updated = paragraphService.updateParagraphForAdmin(id, request);
         return ResponseEntity.ok(ApiResponse.success(updated));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteParagraphForAdmin(@PathVariable Integer id) {
         paragraphService.deleteParagraphForAdmin(id);
         return ResponseEntity.ok(ApiResponse.success(null));
