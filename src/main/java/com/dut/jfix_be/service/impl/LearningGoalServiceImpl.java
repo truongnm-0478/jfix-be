@@ -18,6 +18,8 @@ import com.dut.jfix_be.dto.request.LearningGoalRequest;
 import com.dut.jfix_be.dto.response.CardResponse;
 import com.dut.jfix_be.dto.response.DeckResponse;
 import com.dut.jfix_be.dto.response.LearningGoalResponse;
+import com.dut.jfix_be.entity.Card;
+import com.dut.jfix_be.entity.Deck;
 import com.dut.jfix_be.entity.FreeTalkTopic;
 import com.dut.jfix_be.entity.Grammar;
 import com.dut.jfix_be.entity.LearningGoal;
@@ -31,6 +33,8 @@ import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.enums.Skill;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.DeckRepository;
 import com.dut.jfix_be.repository.FreeTalkTopicRepository;
 import com.dut.jfix_be.repository.GrammarRepository;
 import com.dut.jfix_be.repository.LearningGoalRepository;
@@ -62,6 +66,8 @@ public class LearningGoalServiceImpl implements LearningGoalService {
     private final MessageSource messageSource;
     private final SentenceRepository sentenceRepository;
     private final StudyLogRepository studyLogRepository;
+    private final DeckRepository deckRepository;
+    private final CardRepository cardRepository;
 
     @Override
     @Transactional
@@ -289,5 +295,130 @@ public class LearningGoalServiceImpl implements LearningGoalService {
 
     private boolean hasExistingGoalWithLevel(Integer userId, JlptLevel level) {
         return learningGoalRepository.existsActiveGoalByUserIdAndLevel(userId, level);
+    }
+
+    @Override
+    @Transactional
+    public LearningGoalResponse updateLearningGoal(LearningGoalRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageSource.getMessage("error.user.not.found", new Object[]{username}, LocaleContextHolder.getLocale())
+            ));
+
+        LearningGoal currentGoal = learningGoalRepository.findActiveGoalByUserId(user.getId())
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageSource.getMessage("error.learning.goal.not.found", null, LocaleContextHolder.getLocale())
+            ));
+
+        boolean isTargetLevelChanged = !currentGoal.getTargetLevel().equals(request.getTargetLevel());
+        boolean isDailyMinutesChanged = !java.util.Objects.equals(currentGoal.getDailyMinutes(), request.getDailyMinutes());
+        boolean isDailyVocabTargetChanged = !java.util.Objects.equals(currentGoal.getDailyVocabTarget(), request.getDailyVocabTarget());
+        boolean isTargetDateChanged = !java.util.Objects.equals(currentGoal.getTargetDate(), request.getTargetDate());
+        boolean isDescriptionChanged = !java.util.Objects.equals(currentGoal.getDescription(), request.getDescription());
+
+        if (isDescriptionChanged && !isTargetLevelChanged && !isDailyMinutesChanged && !isDailyVocabTargetChanged && !isTargetDateChanged) {
+            currentGoal.setDescription(request.getDescription());
+            currentGoal.setUpdateDate(LocalDateTime.now());
+            currentGoal.setUpdateBy(username);
+            learningGoalRepository.save(currentGoal);
+            return LearningGoalResponse.fromLearningGoal(currentGoal);
+        }
+
+        if (isTargetLevelChanged) {
+            deleteAllDecksAndRelated(user.getId());
+            currentGoal.setTargetLevel(request.getTargetLevel());
+            currentGoal.setDescription(request.getDescription());
+            currentGoal.setDailyMinutes(request.getDailyMinutes());
+            currentGoal.setDailyVocabTarget(request.getDailyVocabTarget());
+            currentGoal.setTargetDate(request.getTargetDate());
+            currentGoal.setUpdateDate(LocalDateTime.now());
+            currentGoal.setUpdateBy(username);
+            learningGoalRepository.save(currentGoal);
+            LearningGoalResponse response = LearningGoalResponse.fromLearningGoal(currentGoal);
+            setupInitialLearningDecks(user.getId(), response);
+            return response;
+        } else if (isDailyMinutesChanged || isDailyVocabTargetChanged || isTargetDateChanged) {
+            currentGoal.setDailyMinutes(request.getDailyMinutes());
+            currentGoal.setDailyVocabTarget(request.getDailyVocabTarget());
+            currentGoal.setTargetDate(request.getTargetDate());
+            currentGoal.setDescription(request.getDescription());
+            currentGoal.setUpdateDate(LocalDateTime.now());
+            currentGoal.setUpdateBy(username);
+            learningGoalRepository.save(currentGoal);
+            redistributeUnlearnedCards(user.getId(), currentGoal);
+            return LearningGoalResponse.fromLearningGoal(currentGoal);
+        } else if (isDescriptionChanged) {
+            currentGoal.setDescription(request.getDescription());
+            currentGoal.setUpdateDate(LocalDateTime.now());
+            currentGoal.setUpdateBy(username);
+            learningGoalRepository.save(currentGoal);
+            return LearningGoalResponse.fromLearningGoal(currentGoal);
+        }
+        return LearningGoalResponse.fromLearningGoal(currentGoal);
+    }
+
+    private void deleteAllDecksAndRelated(Integer userId) {
+        LearningGoal currentGoal = learningGoalRepository.findActiveGoalByUserId(userId)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                messageSource.getMessage("error.learning.goal.not.found", null, LocaleContextHolder.getLocale())
+            ));
+        String levelPrefix = currentGoal.getTargetLevel().name();
+        List<Deck> decks = deckRepository.findByUserId(userId).stream()
+            .filter(deck -> deck.getName() != null && deck.getName().contains(levelPrefix))
+            .toList();
+        for (Deck deck : decks) {
+            List<Card> cards = cardRepository.findByDeckId(deck.getId());
+            for (Card card : cards) {
+                studyLogRepository.deleteAllByCardId(card.getId());
+                cardRepository.deleteById(card.getId());
+            }
+            deckRepository.deleteById(deck.getId());
+        }
+    }
+
+    private void redistributeUnlearnedCards(Integer userId, LearningGoal goal) {
+        List<Deck> decks = deckRepository.findByUserId(userId);
+        List<Card> allCards = decks.stream()
+                .flatMap(deck -> cardRepository.findByDeckId(deck.getId()).stream())
+                .toList();
+        List<StudyLog> allLogs = studyLogRepository.findByUserId(userId);
+        var learnedCardIds = allLogs.stream()
+                .filter(log -> log.getUpdateDate() != null)
+                .map(StudyLog::getCardId)
+                .collect(java.util.stream.Collectors.toSet());
+        var unlearnedCardIds = allLogs.stream()
+                .filter(log -> log.getUpdateDate() == null)
+                .map(StudyLog::getCardId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<Card> unlearnedCards = allCards.stream()
+                .filter(card -> unlearnedCardIds.contains(card.getId()) || !allLogs.stream().anyMatch(log -> log.getCardId().equals(card.getId())))
+                .toList();
+        for (Card card : unlearnedCards) {
+            studyLogRepository.deleteAllByCardId(card.getId());
+        }
+        int totalUnlearned = unlearnedCards.size();
+        long totalDays = ChronoUnit.DAYS.between(LocalDate.now(), goal.getTargetDate());
+        int vocabPerDay = (int) Math.ceil((double) totalUnlearned / totalDays);
+        LocalDate currentDate = LocalDate.now();
+        int cardIndex = 0;
+        for (int day = 0; day < totalDays; day++) {
+            LocalDate reviewDate = currentDate.plusDays(day);
+            for (int i = 0; i < vocabPerDay && cardIndex < totalUnlearned; i++, cardIndex++) {
+                Card card = unlearnedCards.get(cardIndex);
+                StudyLog studyLog = StudyLog.builder()
+                        .userId(userId)
+                        .cardId(card.getId())
+                        .reviewDate(reviewDate.atStartOfDay())
+                        .repetition(0)
+                        .intervals(0f)
+                        .easinessFactor(2.5f)
+                        .createDate(LocalDateTime.now())
+                        .createBy("SYSTEM")
+                        .build();
+                studyLogRepository.save(studyLog);
+            }
+        }
     }
 } 

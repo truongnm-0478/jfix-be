@@ -3,6 +3,7 @@ package com.dut.jfix_be.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,5 +42,12 @@ public class LearningGoalController {
     public ResponseEntity<ApiResponse<Boolean>> checkExistingGoal() {
         boolean hasGoal = learningGoalService.hasExistingGoal();
         return ResponseEntity.ok(ApiResponse.success(hasGoal));
+    }
+
+    @PutMapping
+    public ResponseEntity<ApiResponse<LearningGoalResponse>> updateLearningGoal(
+            @Valid @RequestBody LearningGoalRequest request) {
+        LearningGoalResponse response = learningGoalService.updateLearningGoal(request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 } 
