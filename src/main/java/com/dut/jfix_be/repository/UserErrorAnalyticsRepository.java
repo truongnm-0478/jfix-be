@@ -10,4 +10,5 @@ import com.dut.jfix_be.entity.UserErrorAnalytics;
 @Repository
 public interface UserErrorAnalyticsRepository extends JpaRepository<UserErrorAnalytics, Integer> {
     Optional<UserErrorAnalytics> findByUserIdAndCardId(Integer userId, Integer cardId);
+    void deleteAllByCardId(Integer cardId);
 } 

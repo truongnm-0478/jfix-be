@@ -14,19 +14,31 @@ import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.GrammarRequest;
 import com.dut.jfix_be.dto.response.GrammarAdminResponse;
 import com.dut.jfix_be.dto.response.GrammarResponse;
+import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.Grammar;
+import com.dut.jfix_be.entity.UserMistake;
+import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.CorrectionHistoryRepository;
 import com.dut.jfix_be.repository.GrammarRepository;
+import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.service.GrammarService;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class GrammarServiceImpl implements GrammarService {
 
     private final GrammarRepository grammarRepository;
-
-    public GrammarServiceImpl(GrammarRepository grammarRepository) {
-        this.grammarRepository = grammarRepository;
-    }
+    private final CardRepository cardRepository;
+    private final StudyLogRepository studyLogRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
+    private final CorrectionHistoryRepository correctionHistoryRepository;
 
     @Override
     public List<GrammarResponse> findByLevel(JlptLevel level) {
@@ -193,6 +205,17 @@ public class GrammarServiceImpl implements GrammarService {
     public void deleteGrammarForAdmin(Integer id) {
         Grammar grammar = grammarRepository.findById(id)
                 .orElseThrow(() -> new com.dut.jfix_be.exception.ResourceNotFoundException("error.grammar.not.found", id));
+        List<Card> cards = cardRepository.findByTypeAndItemId(CardType.GRAMMAR, id);
+        for (Card card : cards) {
+            studyLogRepository.deleteAllByCardId(card.getId());
+            List<UserMistake> mistakes = userMistakeRepository.findByCardId(card.getId());
+            for (UserMistake mistake : mistakes) {
+                correctionHistoryRepository.deleteAllByUserMistakeId(mistake.getId());
+            }
+            userMistakeRepository.deleteAllByCardId(card.getId());
+            userErrorAnalyticsRepository.deleteAllByCardId(card.getId());
+            cardRepository.delete(card);
+        }
         grammarRepository.delete(grammar);
     }
 }

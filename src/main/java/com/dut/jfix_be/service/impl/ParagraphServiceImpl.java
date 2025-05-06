@@ -10,10 +10,18 @@ import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.ParagraphRequest;
 import com.dut.jfix_be.dto.response.ParagraphAdminResponse;
 import com.dut.jfix_be.dto.response.ParagraphResponse;
+import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.Paragraph;
+import com.dut.jfix_be.entity.UserMistake;
+import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.CorrectionHistoryRepository;
 import com.dut.jfix_be.repository.ParagraphRepository;
+import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.service.CloudinaryService;
 import com.dut.jfix_be.service.ParagraphService;
 
@@ -24,6 +32,11 @@ import lombok.RequiredArgsConstructor;
 public class ParagraphServiceImpl implements ParagraphService {
 
     private final ParagraphRepository paragraphRepository;
+    private final CardRepository cardRepository;
+    private final StudyLogRepository studyLogRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
+    private final CorrectionHistoryRepository correctionHistoryRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -154,6 +167,21 @@ public class ParagraphServiceImpl implements ParagraphService {
     public void deleteParagraphForAdmin(Integer id) {
         Paragraph paragraph = paragraphRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("error.paragraph.not.found", id));
+        String audioUrl = paragraph.getAudioUrl();
+        if (audioUrl != null && !audioUrl.isEmpty() && audioUrl.contains("cloudinary")) {
+            cloudinaryService.deleteAudio(audioUrl);
+        }
+        List<Card> cards = cardRepository.findByTypeAndItemId(CardType.PARAGRAPH, id);
+        for (Card card : cards) {
+            studyLogRepository.deleteAllByCardId(card.getId());
+            List<UserMistake> mistakes = userMistakeRepository.findByCardId(card.getId());
+            for (UserMistake mistake : mistakes) {
+                correctionHistoryRepository.deleteAllByUserMistakeId(mistake.getId());
+            }
+            userMistakeRepository.deleteAllByCardId(card.getId());
+            userErrorAnalyticsRepository.deleteAllByCardId(card.getId());
+            cardRepository.delete(card);
+        }
         paragraphRepository.delete(paragraph);
     }
 }

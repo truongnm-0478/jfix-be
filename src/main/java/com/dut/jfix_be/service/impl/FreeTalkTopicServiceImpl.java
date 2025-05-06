@@ -9,10 +9,18 @@ import org.springframework.stereotype.Service;
 import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.FreeTalkTopicRequest;
 import com.dut.jfix_be.dto.response.FreeTalkTopicAdminResponse;
+import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.FreeTalkTopic;
+import com.dut.jfix_be.entity.UserMistake;
+import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.CorrectionHistoryRepository;
 import com.dut.jfix_be.repository.FreeTalkTopicRepository;
+import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.service.CloudinaryService;
 import com.dut.jfix_be.service.FreeTalkTopicService;
 
@@ -22,6 +30,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FreeTalkTopicServiceImpl implements FreeTalkTopicService {
     private final FreeTalkTopicRepository freeTalkTopicRepository;
+    private final CardRepository cardRepository;
+    private final StudyLogRepository studyLogRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
+    private final CorrectionHistoryRepository correctionHistoryRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -111,8 +124,23 @@ public class FreeTalkTopicServiceImpl implements FreeTalkTopicService {
 
     @Override
     public void deleteFreeTalkTopicForAdmin(Integer id) {
-        FreeTalkTopic t = freeTalkTopicRepository.findById(id)
+        FreeTalkTopic freeTalkTopic = freeTalkTopicRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("error.free.talk.topic.not.found", id));
-        freeTalkTopicRepository.delete(t);
+        String audioUrl = freeTalkTopic.getAudioUrl();
+        if (audioUrl != null && !audioUrl.isEmpty() && audioUrl.contains("cloudinary")) {
+            cloudinaryService.deleteAudio(audioUrl);
+        }
+        List<Card> cards = cardRepository.findByTypeAndItemId(CardType.FREE_TALK_TOPIC, id);
+        for (Card card : cards) {
+            studyLogRepository.deleteAllByCardId(card.getId());
+            List<UserMistake> mistakes = userMistakeRepository.findByCardId(card.getId());
+            for (UserMistake mistake : mistakes) {
+                correctionHistoryRepository.deleteAllByUserMistakeId(mistake.getId());
+            }
+            userMistakeRepository.deleteAllByCardId(card.getId());
+            userErrorAnalyticsRepository.deleteAllByCardId(card.getId());
+            cardRepository.delete(card);
+        }
+        freeTalkTopicRepository.delete(freeTalkTopic);
     }
 }

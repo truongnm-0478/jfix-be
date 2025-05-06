@@ -11,4 +11,5 @@ import com.dut.jfix_be.entity.CorrectionHistory;
 public interface CorrectionHistoryRepository extends JpaRepository<CorrectionHistory, Integer> {
     int countByUserMistakeId(Integer userMistakeId);
     List<CorrectionHistory> findAllByUserMistakeId(Integer userMistakeId);
+    void deleteAllByUserMistakeId(Integer userMistakeId);
 } 

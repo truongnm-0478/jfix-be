@@ -9,10 +9,18 @@ import org.springframework.stereotype.Service;
 import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.SentenceRequest;
 import com.dut.jfix_be.dto.response.SentenceAdminResponse;
+import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.Sentence;
+import com.dut.jfix_be.entity.UserMistake;
+import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.CorrectionHistoryRepository;
 import com.dut.jfix_be.repository.SentenceRepository;
+import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.service.CloudinaryService;
 import com.dut.jfix_be.service.SentenceService;
 
@@ -22,6 +30,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SentenceServiceImpl implements SentenceService {
     private final SentenceRepository sentenceRepository;
+    private final CardRepository cardRepository;
+    private final StudyLogRepository studyLogRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
+    private final CorrectionHistoryRepository correctionHistoryRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -109,6 +122,21 @@ public class SentenceServiceImpl implements SentenceService {
     public void deleteSentenceForAdmin(Integer id) {
         Sentence sentence = sentenceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("error.sentence.not.found", id));
+        String audioUrl = sentence.getAudioUrl();
+        if (audioUrl != null && !audioUrl.isEmpty() && audioUrl.contains("cloudinary")) {
+            cloudinaryService.deleteAudio(audioUrl);
+        }
+        List<Card> cards = cardRepository.findByTypeAndItemId(CardType.SENTENCE, id);
+        for (Card card : cards) {
+            studyLogRepository.deleteAllByCardId(card.getId());
+            List<UserMistake> mistakes = userMistakeRepository.findByCardId(card.getId());
+            for (UserMistake mistake : mistakes) {
+                correctionHistoryRepository.deleteAllByUserMistakeId(mistake.getId());
+            }
+            userMistakeRepository.deleteAllByCardId(card.getId());
+            userErrorAnalyticsRepository.deleteAllByCardId(card.getId());
+            cardRepository.delete(card);
+        }
         sentenceRepository.delete(sentence);
     }
 }

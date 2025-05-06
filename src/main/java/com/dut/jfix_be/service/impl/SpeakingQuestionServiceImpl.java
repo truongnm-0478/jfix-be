@@ -9,10 +9,18 @@ import org.springframework.stereotype.Service;
 import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.SpeakingQuestionRequest;
 import com.dut.jfix_be.dto.response.SpeakingQuestionAdminResponse;
+import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.SpeakingQuestion;
+import com.dut.jfix_be.entity.UserMistake;
+import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.CorrectionHistoryRepository;
 import com.dut.jfix_be.repository.SpeakingQuestionRepository;
+import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.service.CloudinaryService;
 import com.dut.jfix_be.service.SpeakingQuestionService;
 
@@ -22,6 +30,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SpeakingQuestionServiceImpl implements SpeakingQuestionService {
     private final SpeakingQuestionRepository speakingQuestionRepository;
+    private final CardRepository cardRepository;
+    private final StudyLogRepository studyLogRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
+    private final CorrectionHistoryRepository correctionHistoryRepository;
     private final CloudinaryService cloudinaryService;
 
     @Override
@@ -111,8 +124,23 @@ public class SpeakingQuestionServiceImpl implements SpeakingQuestionService {
 
     @Override
     public void deleteSpeakingQuestionForAdmin(Integer id) {
-        SpeakingQuestion q = speakingQuestionRepository.findById(id)
+        SpeakingQuestion speakingQuestion = speakingQuestionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("error.speaking.question.not.found", id));
-        speakingQuestionRepository.delete(q);
+        String audioUrl = speakingQuestion.getAudioUrl();
+        if (audioUrl != null && !audioUrl.isEmpty() && audioUrl.contains("cloudinary")) {
+            cloudinaryService.deleteAudio(audioUrl);
+        }
+        List<Card> cards = cardRepository.findByTypeAndItemId(CardType.SPEAKING_QUESTION, id);
+        for (Card card : cards) {
+            studyLogRepository.deleteAllByCardId(card.getId());
+            List<UserMistake> mistakes = userMistakeRepository.findByCardId(card.getId());
+            for (UserMistake mistake : mistakes) {
+                correctionHistoryRepository.deleteAllByUserMistakeId(mistake.getId());
+            }
+            userMistakeRepository.deleteAllByCardId(card.getId());
+            userErrorAnalyticsRepository.deleteAllByCardId(card.getId());
+            cardRepository.delete(card);
+        }
+        speakingQuestionRepository.delete(speakingQuestion);
     }
 }

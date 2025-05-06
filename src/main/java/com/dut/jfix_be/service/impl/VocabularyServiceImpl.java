@@ -13,12 +13,16 @@ import com.dut.jfix_be.dto.request.VocabularyAdminRequest;
 import com.dut.jfix_be.dto.response.VocabularyAdminResponse;
 import com.dut.jfix_be.dto.response.VocabularyResponse;
 import com.dut.jfix_be.entity.Card;
+import com.dut.jfix_be.entity.UserMistake;
 import com.dut.jfix_be.entity.Vocabulary;
 import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.JlptLevel;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
 import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.CorrectionHistoryRepository;
 import com.dut.jfix_be.repository.StudyLogRepository;
+import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
+import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.repository.VocabularyRepository;
 import com.dut.jfix_be.service.CloudinaryService;
 import com.dut.jfix_be.service.VocabularyService;
@@ -33,6 +37,9 @@ public class VocabularyServiceImpl implements VocabularyService {
     private final CloudinaryService cloudinaryService;
     private final CardRepository cardRepository;
     private final StudyLogRepository studyLogRepository;
+    private final UserMistakeRepository userMistakeRepository;
+    private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
+    private final CorrectionHistoryRepository correctionHistoryRepository;
 
     @Override
     public VocabularyResponse findById(Integer id) {
@@ -190,6 +197,12 @@ public class VocabularyServiceImpl implements VocabularyService {
         List<Card> cards = cardRepository.findByTypeAndItemId(CardType.VOCABULARY, id);
         for (Card card : cards) {
             studyLogRepository.deleteAllByCardId(card.getId());
+            List<UserMistake> mistakes = userMistakeRepository.findByCardId(card.getId());
+            for (UserMistake mistake : mistakes) {
+                correctionHistoryRepository.deleteAllByUserMistakeId(mistake.getId());
+            }
+            userMistakeRepository.deleteAllByCardId(card.getId());
+            userErrorAnalyticsRepository.deleteAllByCardId(card.getId());
             cardRepository.delete(card);
         }
         vocabularyRepository.delete(vocabulary);
