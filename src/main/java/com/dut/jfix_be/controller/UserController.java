@@ -1,5 +1,7 @@
 package com.dut.jfix_be.controller;
 
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,6 +46,12 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getUserDetail(@AuthenticationPrincipal UserDetails userDetails) {
         UserResponse user = userService.getUserDetail(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @GetMapping("/stats/learned-card-count")
+    public ResponseEntity<ApiResponse<Map<String, Map<String, Integer>>>> getLearnedCardCount() {
+        Map<String, Map<String, Integer>> stats = userService.getLearnedCardCount();
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 
 }

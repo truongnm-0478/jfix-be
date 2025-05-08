@@ -1,5 +1,7 @@
 package com.dut.jfix_be.service;
 
+import java.util.Map;
+
 import com.dut.jfix_be.dto.DataWithPageResponse;
 import com.dut.jfix_be.dto.request.ChangePasswordRequest;
 import com.dut.jfix_be.dto.request.UserUpdateRequest;
@@ -16,4 +18,5 @@ public interface UserService {
     UserResponse getUserDetail(String username);
     String lockUser(Integer id, String adminUsername);
     String unlockUser(Integer id, String adminUsername);
+    Map<String, Map<String, Integer>> getLearnedCardCount();
 }

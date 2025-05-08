@@ -2,7 +2,9 @@ package com.dut.jfix_be.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.context.MessageSource;
@@ -19,8 +21,11 @@ import com.dut.jfix_be.dto.response.ChangePasswordResponse;
 import com.dut.jfix_be.dto.response.UserAdminResponse;
 import com.dut.jfix_be.dto.response.UserResponse;
 import com.dut.jfix_be.entity.User;
+import com.dut.jfix_be.enums.CardType;
 import com.dut.jfix_be.enums.UserRole;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
+import com.dut.jfix_be.repository.CardRepository;
+import com.dut.jfix_be.repository.StudyLogRepository;
 import com.dut.jfix_be.repository.UserRepository;
 import com.dut.jfix_be.service.CloudinaryService;
 import com.dut.jfix_be.service.UserService;
@@ -36,6 +41,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final MessageSource messageSource;
     private final CloudinaryService cloudinaryService;
+    private final StudyLogRepository studyLogRepository;
+    private final CardRepository cardRepository;
 
     @Override
     @Transactional
@@ -195,5 +202,70 @@ public class UserServiceImpl implements UserService {
         user.setUpdateDate(LocalDateTime.now());
         userRepository.save(user);
         return messageSource.getMessage("success.user.unlocked", new Object[]{user.getUsername()}, LocaleContextHolder.getLocale());
+    }
+
+    @Override
+    public Map<String, Map<String, Integer>> getLearnedCardCount() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        Integer userId = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username)).getId();
+        var learnedLogs = studyLogRepository.findByUserId(userId).stream()
+                .filter(log -> log.getUpdateDate() != null)
+                .toList();
+        Map<String, Integer> learnedStats = new HashMap<>();
+        Map<String, Integer> totalStats = new HashMap<>();
+        learnedStats.put("vocabulary", 0);
+        learnedStats.put("grammar", 0);
+        learnedStats.put("paragraph", 0);
+        learnedStats.put("sentence", 0);
+        learnedStats.put("free_talk_topic", 0);
+        learnedStats.put("speaking_question", 0);
+        totalStats.put("vocabulary", 0);
+        totalStats.put("grammar", 0);
+        totalStats.put("paragraph", 0);
+        totalStats.put("sentence", 0);
+        totalStats.put("free_talk_topic", 0);
+        totalStats.put("speaking_question", 0);
+        // Đếm số lượng đã học
+        for (var log : learnedLogs) {
+            var card = cardRepository.findById(log.getCardId()).orElse(null);
+            if (card == null) continue;
+            CardType type = card.getType();
+            switch (type) {
+                case VOCABULARY -> learnedStats.put("vocabulary", learnedStats.get("vocabulary") + 1);
+                case GRAMMAR -> learnedStats.put("grammar", learnedStats.get("grammar") + 1);
+                case PARAGRAPH -> learnedStats.put("paragraph", learnedStats.get("paragraph") + 1);
+                case SENTENCE -> learnedStats.put("sentence", learnedStats.get("sentence") + 1);
+                case FREE_TALK_TOPIC -> learnedStats.put("free_talk_topic", learnedStats.get("free_talk_topic") + 1);
+                case SPEAKING_QUESTION -> learnedStats.put("speaking_question", learnedStats.get("speaking_question") + 1);
+                default -> {}
+            }
+        }
+        // Đếm tổng số thẻ cần học của user theo từng loại (dựa trên study log của user)
+        var allUserLogs = studyLogRepository.findByUserId(userId);
+        for (var log : allUserLogs) {
+            var card = cardRepository.findById(log.getCardId()).orElse(null);
+            if (card == null) continue;
+            CardType type = card.getType();
+            switch (type) {
+                case VOCABULARY -> totalStats.put("vocabulary", totalStats.get("vocabulary") + 1);
+                case GRAMMAR -> totalStats.put("grammar", totalStats.get("grammar") + 1);
+                case PARAGRAPH -> totalStats.put("paragraph", totalStats.get("paragraph") + 1);
+                case SENTENCE -> totalStats.put("sentence", totalStats.get("sentence") + 1);
+                case FREE_TALK_TOPIC -> totalStats.put("free_talk_topic", totalStats.get("free_talk_topic") + 1);
+                case SPEAKING_QUESTION -> totalStats.put("speaking_question", totalStats.get("speaking_question") + 1);
+                default -> {}
+            }
+        }
+        // Gộp kết quả
+        Map<String, Map<String, Integer>> result = new HashMap<>();
+        for (String key : learnedStats.keySet()) {
+            Map<String, Integer> value = new HashMap<>();
+            value.put("learnedCount", learnedStats.get(key));
+            value.put("totalCount", totalStats.get(key));
+            result.put(key, value);
+        }
+        return result;
     }
 }
