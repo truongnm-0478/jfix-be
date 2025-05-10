@@ -91,22 +91,21 @@ public class UserAchievementServiceImpl implements UserAchievementService {
 
     @Override
     public void calculateAndSaveAchievements(Integer userId) {
-        // 1. Số thẻ đã hoàn thành: đếm số study log có repetition > 0 (tức là đã review ít nhất 1 lần)
-        List<StudyLog> logs = studyLogRepository.findByUserId(userId);
-        int completedCards = (int) logs.stream()
-            .filter(log -> log.getRepetition() != null && log.getRepetition() > 0)
-            .count();
+        List<UserDailyCardStat> stats = userDailyCardStatRepository.findAll().stream()
+            .filter(stat -> stat.getUserId().equals(userId))
+            .collect(Collectors.toList());
+        int completedCards = (int) stats.stream()
+            .map(UserDailyCardStat::getCardCount)
+            .reduce(0, Integer::sum);
         saveOrUpdateAchievement(userId, AchievementType.LESSON_COMPLETED, completedCards);
 
-        int streakDays = calculateStreakDays(logs);
+        int streakDays = calculateStreakDaysFromStats(stats);
         saveOrUpdateAchievement(userId, AchievementType.STREAK_DAYS, streakDays);
     }
 
-    private int calculateStreakDays(List<StudyLog> logs) {
-        List<LocalDate> studyDates = logs.stream()
-            .map(StudyLog::getUpdateDate)
-            .filter(java.util.Objects::nonNull)
-            .map(java.time.LocalDateTime::toLocalDate)
+    private int calculateStreakDaysFromStats(List<UserDailyCardStat> stats) {
+        List<LocalDate> studyDates = stats.stream()
+            .map(UserDailyCardStat::getStatDate)
             .distinct()
             .sorted()
             .collect(Collectors.toList());
