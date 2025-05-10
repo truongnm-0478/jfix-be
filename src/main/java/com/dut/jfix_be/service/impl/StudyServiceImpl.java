@@ -385,6 +385,7 @@ public class StudyServiceImpl implements StudyService {
                             .vietnameseText(paragraph.getVietnameseText())
                             .topic(paragraph.getTopic())
                             .japaneseTextFurigana(furiganaService.applyFurigana(paragraph.getJapaneseText()))
+                            .audioUrl(paragraph.getAudioUrl())
                             .level(paragraph.getLevel());
                     }
                     break;
@@ -395,6 +396,7 @@ public class StudyServiceImpl implements StudyService {
                             .japaneseText(sentence.getJapaneseText())
                             .vietnameseText(sentence.getVietnameseText())
                             .japaneseTextFurigana(furiganaService.applyFurigana(sentence.getJapaneseText()))
+                            .audioUrl(sentence.getAudioUrl())
                             .level(sentence.getLevel());
                     }
                     break;
@@ -408,6 +410,7 @@ public class StudyServiceImpl implements StudyService {
                             .sampleAnswerVietnamese(question.getSampleAnswerVietnamese())
                             .level(question.getLevel())
                             .japaneseTextFurigana(furiganaService.applyFurigana(question.getJapaneseText()))
+                            .audioUrl(question.getAudioUrl())
                             .sampleAnswerJapaneseFurigana(furiganaService.applyFurigana(question.getSampleAnswerJapanese()));
                     }
                     break;
@@ -418,7 +421,8 @@ public class StudyServiceImpl implements StudyService {
                             .japaneseText(topic.getJapaneseText())
                             .vietnameseText(topic.getVietnameseText())
                             .guidelines(topic.getSampleAnswerVietnamese())
-                            .level(topic.getLevel());
+                            .level(topic.getLevel())
+                            .audioUrl(topic.getAudioUrl());
                     }
                     break;
             }
