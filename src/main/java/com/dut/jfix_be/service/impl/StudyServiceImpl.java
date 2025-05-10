@@ -47,6 +47,7 @@ import com.dut.jfix_be.repository.UserErrorAnalyticsRepository;
 import com.dut.jfix_be.repository.UserMistakeRepository;
 import com.dut.jfix_be.repository.UserRepository;
 import com.dut.jfix_be.repository.VocabularyRepository;
+import com.dut.jfix_be.service.FuriganaService;
 import com.dut.jfix_be.service.StudyService;
 
 import lombok.RequiredArgsConstructor;
@@ -69,6 +70,7 @@ public class StudyServiceImpl implements StudyService {
     private final UserErrorAnalyticsRepository userErrorAnalyticsRepository;
     private final CorrectionHistoryRepository correctionHistoryRepository;
     private final UserDailyCardStatRepository userDailyCardStatRepository;
+    private final FuriganaService furiganaService;
 
     private String getGroupKey(CardType type, Skill skill) {
         return skill != null ? type + ":" + skill : type.toString();
@@ -356,6 +358,7 @@ public class StudyServiceImpl implements StudyService {
                             .reading(vocab.getReading())
                             .example(vocab.getExampleWithoutReading())
                             .exampleMeaning(vocab.getExampleMeaning())
+                            .japaneseTextFurigana(furiganaService.applyFurigana(vocab.getExampleWithoutReading()))
                             .level(vocab.getLevel())
                             .audioUrl(vocab.getAudio());
                     }
@@ -370,6 +373,7 @@ public class StudyServiceImpl implements StudyService {
                             .example(grammar.getExample())
                             .exampleMeaning(grammar.getExampleMeaning())
                             .romaji(grammar.getRomaji())
+                            .japaneseTextFurigana(furiganaService.applyFurigana(grammar.getExample()))
                             .level(grammar.getLevel());
                     }
                     break;
@@ -380,6 +384,7 @@ public class StudyServiceImpl implements StudyService {
                             .japaneseText(paragraph.getJapaneseText())
                             .vietnameseText(paragraph.getVietnameseText())
                             .topic(paragraph.getTopic())
+                            .japaneseTextFurigana(furiganaService.applyFurigana(paragraph.getJapaneseText()))
                             .level(paragraph.getLevel());
                     }
                     break;
@@ -389,6 +394,7 @@ public class StudyServiceImpl implements StudyService {
                         responseBuilder
                             .japaneseText(sentence.getJapaneseText())
                             .vietnameseText(sentence.getVietnameseText())
+                            .japaneseTextFurigana(furiganaService.applyFurigana(sentence.getJapaneseText()))
                             .level(sentence.getLevel());
                     }
                     break;
@@ -400,7 +406,9 @@ public class StudyServiceImpl implements StudyService {
                             .vietnameseText(question.getVietnameseText())
                             .sampleAnswerJapanese(question.getSampleAnswerJapanese())
                             .sampleAnswerVietnamese(question.getSampleAnswerVietnamese())
-                            .level(question.getLevel());
+                            .level(question.getLevel())
+                            .japaneseTextFurigana(furiganaService.applyFurigana(question.getJapaneseText()))
+                            .sampleAnswerJapaneseFurigana(furiganaService.applyFurigana(question.getSampleAnswerJapanese()));
                     }
                     break;
                 case FREE_TALK_TOPIC:

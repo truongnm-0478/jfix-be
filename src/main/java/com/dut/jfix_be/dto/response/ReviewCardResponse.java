@@ -58,4 +58,8 @@ public class ReviewCardResponse {
     private String japaneseText;
 
     private UserMistakeHistoryResponse mistakeHistory;
+
+    // Furigana
+    private String japaneseTextFurigana;
+    private String sampleAnswerJapaneseFurigana;
 } 

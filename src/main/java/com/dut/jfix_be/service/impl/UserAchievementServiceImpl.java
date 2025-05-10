@@ -98,28 +98,31 @@ public class UserAchievementServiceImpl implements UserAchievementService {
             .count();
         saveOrUpdateAchievement(userId, AchievementType.LESSON_COMPLETED, completedCards);
 
-        // 2. Số ngày học liên tiếp (streak days)
         int streakDays = calculateStreakDays(logs);
         saveOrUpdateAchievement(userId, AchievementType.STREAK_DAYS, streakDays);
     }
 
     private int calculateStreakDays(List<StudyLog> logs) {
-        // Lấy danh sách ngày học (không trùng lặp)
         List<LocalDate> studyDates = logs.stream()
-            .map(log -> log.getReviewDate().toLocalDate())
+            .map(StudyLog::getUpdateDate)
+            .filter(java.util.Objects::nonNull)
+            .map(java.time.LocalDateTime::toLocalDate)
             .distinct()
-            .sorted(Comparator.reverseOrder())
+            .sorted()
             .collect(Collectors.toList());
-        int streak = 0;
-        LocalDate today = LocalDate.now();
-        for (LocalDate date : studyDates) {
-            if (date.equals(today.minusDays(streak))) {
-                streak++;
+        if (studyDates.isEmpty()) return 0;
+    
+        int maxStreak = 1;
+        int currentStreak = 1;
+        for (int i = 1; i < studyDates.size(); i++) {
+            if (studyDates.get(i).equals(studyDates.get(i - 1).plusDays(1))) {
+                currentStreak++;
             } else {
-                break;
+                currentStreak = 1;
             }
+            if (currentStreak > maxStreak) maxStreak = currentStreak;
         }
-        return streak;
+        return maxStreak;
     }
 
     private void saveOrUpdateAchievement(Integer userId, AchievementType type, int value) {
