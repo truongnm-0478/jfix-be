@@ -62,4 +62,5 @@ public class ReviewCardResponse {
     // Furigana
     private String japaneseTextFurigana;
     private String sampleAnswerJapaneseFurigana;
+    private String japaneseTextRomaji;
 } 

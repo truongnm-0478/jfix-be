@@ -2,10 +2,12 @@ package com.dut.jfix_be.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dut.jfix_be.dto.request.StudyLogRequest;
 import com.dut.jfix_be.dto.response.ReviewDeckResponse;
+import com.dut.jfix_be.service.SpeechToTextService;
 import com.dut.jfix_be.service.StudyService;
 
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class StudyController {
 
     private final StudyService studyService;
+    private final SpeechToTextService speechToTextService;
 
     @GetMapping("/vocabulary")
     public ResponseEntity<List<ReviewDeckResponse>> getVocabularyCards(
@@ -92,5 +96,17 @@ public class StudyController {
     @PutMapping("/free-talk-topic")
     public ResponseEntity<List<ReviewDeckResponse>> updateFreeTalkTopicStudyLog(@RequestBody StudyLogRequest request) {
         return ResponseEntity.ok(studyService.updateAndReturnFreeTalkTopicDecks(request));
+    }
+
+    @PostMapping("/speech-to-text")
+    public ResponseEntity<?> speechToTextCheck(@RequestBody Map<String, String> req) {
+        String audioData = req.get("audio_data");
+        String userRomaji = req.get("user_romaji");
+        String language = req.getOrDefault("language", "ja-JP");
+        Map<String, Object> result = speechToTextService.checkSpeech(audioData, userRomaji, language);
+        if ("fail".equals(result.get("status"))) {
+            return ResponseEntity.status(502).body(result);
+        }
+        return ResponseEntity.ok(result);
     }
 } 

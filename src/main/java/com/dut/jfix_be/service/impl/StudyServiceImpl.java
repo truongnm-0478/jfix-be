@@ -392,11 +392,13 @@ public class StudyServiceImpl implements StudyService {
                 case SENTENCE:
                     Sentence sentence = sentenceRepository.findById(card.getItemId()).orElse(null);
                     if (sentence != null) {
+                        String textRomaji = furiganaService.cleanRomaji(furiganaService.toRomaji(sentence.getJapaneseText()));
                         responseBuilder
                             .japaneseText(sentence.getJapaneseText())
                             .vietnameseText(sentence.getVietnameseText())
                             .japaneseTextFurigana(furiganaService.applyFurigana(sentence.getJapaneseText()))
                             .audioUrl(sentence.getAudioUrl())
+                            .japaneseTextRomaji(textRomaji)
                             .level(sentence.getLevel());
                     }
                     break;

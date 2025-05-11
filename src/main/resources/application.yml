@@ -26,3 +26,6 @@ cloudinary:
   cloud_name: dshdadptl
   api_key: 923674831294794
   api_secret: lo49vH-pv35Qghq2dJx6ezbaXJk
+
+ai-service:
+  url: http://localhost:9000/api
