@@ -49,4 +49,19 @@ public class AdminDashboardController {
         List<Map<String, Object>> recentUsers = dashboardService.getRecentUsers();
         return ResponseEntity.ok(ApiResponse.success(recentUsers));
     }
+
+    @GetMapping("/stats/top-streak-users")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTopStreakUsers(
+            @RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
+        List<Map<String, Object>> topStreakUsers = dashboardService.getTopStreakUsers(limit);
+        return ResponseEntity.ok(ApiResponse.success(topStreakUsers));
+    }
+
+    @GetMapping("/stats/top-cards-users")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTopCardsStudiedUsers(
+            @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+            @RequestParam(value = "month", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate month) {
+        List<Map<String, Object>> topCardsStudiedUsers = dashboardService.getTopCardsStudiedUsers(limit, month);
+        return ResponseEntity.ok(ApiResponse.success(topCardsStudiedUsers));
+    }
 } 

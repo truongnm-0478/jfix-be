@@ -9,4 +9,6 @@ public interface DashboardService {
     List<Map<String, Object>> getDailyActiveUsers(LocalDate startDate, LocalDate endDate);
     Map<String, Integer> getQuestionTypeDistribution();
     List<Map<String, Object>> getRecentUsers();
+    List<Map<String, Object>> getTopStreakUsers(int limit);
+    List<Map<String, Object>> getTopCardsStudiedUsers(int limit, LocalDate month);
 } 

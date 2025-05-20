@@ -222,4 +222,146 @@ public class DashboardServiceImpl implements DashboardService {
             return userData;
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public List<Map<String, Object>> getTopStreakUsers(int limit) {
+        // Get all users
+        List<User> allUsers = userRepository.findAll();
+        
+        // Get all user daily card stats
+        List<UserDailyCardStat> allStats = userDailyCardStatRepository.findAll();
+        
+        // Calculate streak for each user
+        List<Map.Entry<Integer, Integer>> userStreaks = allUsers.stream()
+            .map(user -> {
+                // Get this user's stats
+                List<UserDailyCardStat> userStats = allStats.stream()
+                    .filter(stat -> stat.getUserId().equals(user.getId()))
+                    .collect(Collectors.toList());
+                
+                // Calculate streak
+                int streak = calculateStreakDaysFromStats(userStats);
+                
+                return Map.entry(user.getId(), streak);
+            })
+            .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
+            .limit(limit)
+            .collect(Collectors.toList());
+        
+        // Create response data
+        return userStreaks.stream()
+            .map(entry -> {
+                Integer userId = entry.getKey();
+                Integer streak = entry.getValue();
+                
+                User user = allUsers.stream()
+                    .filter(u -> u.getId().equals(userId))
+                    .findFirst()
+                    .orElse(null);
+                
+                if (user == null) {
+                    return null;
+                }
+                
+                Map<String, Object> userData = new HashMap<>();
+                userData.put("id", user.getId());
+                userData.put("username", user.getUsername());
+                userData.put("name", user.getName());
+                userData.put("email", user.getEmail());
+                userData.put("avatar", user.getAvatar());
+                userData.put("streak", streak);
+                
+                return userData;
+            })
+            .filter(data -> data != null)
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<Map<String, Object>> getTopCardsStudiedUsers(int limit, LocalDate month) {
+        // If month is not provided, use current month
+        if (month == null) {
+            month = LocalDate.now();
+        }
+        
+        // Get start and end of the specified month
+        YearMonth yearMonth = YearMonth.of(month.getYear(), month.getMonth());
+        LocalDate startOfMonth = yearMonth.atDay(1);
+        LocalDate endOfMonth = yearMonth.atEndOfMonth();
+        
+        // Get all users
+        List<User> allUsers = userRepository.findAll();
+        
+        // Get all stats for the month
+        List<UserDailyCardStat> monthlyStats = userDailyCardStatRepository.findAll().stream()
+            .filter(stat -> !stat.getStatDate().isBefore(startOfMonth) && !stat.getStatDate().isAfter(endOfMonth))
+            .collect(Collectors.toList());
+        
+        // Calculate total cards studied for each user in the month
+        Map<Integer, Integer> userCardCounts = new HashMap<>();
+        for (UserDailyCardStat stat : monthlyStats) {
+            userCardCounts.put(stat.getUserId(), 
+                userCardCounts.getOrDefault(stat.getUserId(), 0) + stat.getCardCount());
+        }
+        
+        // Sort users by total cards studied and limit
+        List<Map.Entry<Integer, Integer>> topUsers = userCardCounts.entrySet().stream()
+            .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
+            .limit(limit)
+            .collect(Collectors.toList());
+        
+        // Create response data
+        return topUsers.stream()
+            .map(entry -> {
+                Integer userId = entry.getKey();
+                Integer cardCount = entry.getValue();
+                
+                User user = allUsers.stream()
+                    .filter(u -> u.getId().equals(userId))
+                    .findFirst()
+                    .orElse(null);
+                
+                if (user == null) {
+                    return null;
+                }
+                
+                Map<String, Object> userData = new HashMap<>();
+                userData.put("id", user.getId());
+                userData.put("username", user.getUsername());
+                userData.put("name", user.getName());
+                userData.put("email", user.getEmail());
+                userData.put("avatar", user.getAvatar());
+                userData.put("cardCount", cardCount);
+                userData.put("month", yearMonth.toString());
+                
+                return userData;
+            })
+            .filter(data -> data != null)
+            .collect(Collectors.toList());
+    }
+    
+    // Helper method to calculate streak days from user stats
+    private int calculateStreakDaysFromStats(List<UserDailyCardStat> stats) {
+        List<LocalDate> studyDates = stats.stream()
+            .map(UserDailyCardStat::getStatDate)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+        
+        if (studyDates.isEmpty()) return 0;
+    
+        int maxStreak = 1;
+        int currentStreak = 1;
+        
+        for (int i = 1; i < studyDates.size(); i++) {
+            if (studyDates.get(i).equals(studyDates.get(i - 1).plusDays(1))) {
+                currentStreak++;
+            } else {
+                currentStreak = 1;
+            }
+            if (currentStreak > maxStreak) maxStreak = currentStreak;
+        }
+        
+        return maxStreak;
+    }
 } 
