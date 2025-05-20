@@ -15,6 +15,10 @@ spring:
   messages:
     basename: i18n/messages
     encoding: UTF-8
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 jwt:
   access-token-secret: qA8+q5EhbAnJd87/sCoWw9NGUYfjIYMX6JuNlYqfVOPdmDukMunYeiBbCnpf9mtIGFy7cJprtXQc5jSXfZoS8A==
