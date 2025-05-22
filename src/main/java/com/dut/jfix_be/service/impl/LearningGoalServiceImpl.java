@@ -3,7 +3,9 @@ package com.dut.jfix_be.service.impl;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -393,24 +395,28 @@ public class LearningGoalServiceImpl implements LearningGoalService {
                 .map(StudyLog::getCardId)
                 .collect(java.util.stream.Collectors.toSet());
         List<Card> unlearnedCards = allCards.stream()
-                .filter(card -> unlearnedCardIds.contains(card.getId()) || !allLogs.stream().anyMatch(log -> log.getCardId().equals(card.getId())))
+                .filter(card -> unlearnedCardIds.contains(card.getId()) || 
+                               !allLogs.stream().anyMatch(log -> log.getCardId().equals(card.getId())))
                 .toList();
         for (Card card : unlearnedCards) {
             studyLogRepository.deleteAllByCardId(card.getId());
         }
-        int totalUnlearned = unlearnedCards.size();
-        long totalDays = ChronoUnit.DAYS.between(LocalDate.now(), goal.getTargetDate());
-        int vocabPerDay = (int) Math.ceil((double) totalUnlearned / totalDays);
+        
+        if (unlearnedCards.isEmpty()) {
+            return;
+        }
+        
         LocalDate currentDate = LocalDate.now();
-        int cardIndex = 0;
-        for (int day = 0; day < totalDays; day++) {
-            LocalDate reviewDate = currentDate.plusDays(day);
-            for (int i = 0; i < vocabPerDay && cardIndex < totalUnlearned; i++, cardIndex++) {
-                Card card = unlearnedCards.get(cardIndex);
+        LocalDate targetDate = goal.getTargetDate();
+        
+        long totalDays = ChronoUnit.DAYS.between(currentDate, targetDate);
+        
+        if (totalDays <= 0) {
+            for (Card card : unlearnedCards) {
                 StudyLog studyLog = StudyLog.builder()
                         .userId(userId)
                         .cardId(card.getId())
-                        .reviewDate(reviewDate.atStartOfDay())
+                        .reviewDate(targetDate.atStartOfDay())
                         .repetition(0)
                         .intervals(0f)
                         .easinessFactor(2.5f)
@@ -418,6 +424,87 @@ public class LearningGoalServiceImpl implements LearningGoalService {
                         .createBy("SYSTEM")
                         .build();
                 studyLogRepository.save(studyLog);
+            }
+            return;
+        }
+        Map<CardType, List<Card>> cardsByType = unlearnedCards.stream()
+                .collect(java.util.stream.Collectors.groupingBy(Card::getType));
+        
+        Map<CardType, Integer> cardsPerDayByType = new HashMap<>();
+        Map<CardType, Integer> cardIndexByType = new HashMap<>();
+        
+        for (Map.Entry<CardType, List<Card>> entry : cardsByType.entrySet()) {
+            CardType type = entry.getKey();
+            int totalCardsOfType = entry.getValue().size();
+            
+            int perDay = calculateItemsPerDay(totalCardsOfType, totalDays);
+            
+            cardsPerDayByType.put(type, perDay);
+            cardIndexByType.put(type, 0);
+        }
+        
+        for (int day = 0; day < totalDays; day++) {
+            LocalDate reviewDate = currentDate.plusDays(day);
+            int totalCardsForDay = 0;
+                        
+            for (Map.Entry<CardType, List<Card>> entry : cardsByType.entrySet()) {
+                CardType cardType = entry.getKey();
+                List<Card> cardsOfType = entry.getValue();
+                int cardsPerDay = cardsPerDayByType.get(cardType);
+                int currentIndex = cardIndexByType.get(cardType);
+                
+                int cardsAddedForType = 0;
+                
+                for (int i = 0; i < cardsPerDay && currentIndex < cardsOfType.size(); i++, currentIndex++) {
+                    Card card = cardsOfType.get(currentIndex);
+                    
+                    StudyLog studyLog = StudyLog.builder()
+                            .userId(userId)
+                            .cardId(card.getId())
+                            .reviewDate(reviewDate.atStartOfDay())
+                            .repetition(0)
+                            .intervals(0f)
+                            .easinessFactor(2.5f)
+                            .createDate(LocalDateTime.now())
+                            .createBy("SYSTEM")
+                            .build();
+                    
+                    studyLogRepository.save(studyLog);
+                    cardsAddedForType++;
+                    totalCardsForDay++;
+                }
+                
+                cardIndexByType.put(cardType, currentIndex);
+                
+                if (cardsAddedForType > 0) {
+                    System.out.println("  - " + cardType + ": " + cardsAddedForType + " cards");
+                }
+            }
+        }
+        
+        for (Map.Entry<CardType, List<Card>> entry : cardsByType.entrySet()) {
+            CardType cardType = entry.getKey();
+            List<Card> cardsOfType = entry.getValue();
+            int currentIndex = cardIndexByType.get(cardType);
+            
+            int remainingCards = cardsOfType.size() - currentIndex;
+            if (remainingCards > 0) {                
+                for (int i = currentIndex; i < cardsOfType.size(); i++) {
+                    Card card = cardsOfType.get(i);
+                    
+                    StudyLog studyLog = StudyLog.builder()
+                            .userId(userId)
+                            .cardId(card.getId())
+                            .reviewDate(targetDate.atStartOfDay())
+                            .repetition(0)
+                            .intervals(0f)
+                            .easinessFactor(2.5f)
+                            .createDate(LocalDateTime.now())
+                            .createBy("SYSTEM")
+                            .build();
+                    
+                    studyLogRepository.save(studyLog);
+                }
             }
         }
     }
