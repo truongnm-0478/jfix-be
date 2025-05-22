@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.dut.jfix_be.dto.DataWithPageResponse;
+import com.dut.jfix_be.dto.request.AdminUserCreateRequest;
 import com.dut.jfix_be.dto.request.ChangePasswordRequest;
 import com.dut.jfix_be.dto.request.UserUpdateRequest;
 import com.dut.jfix_be.dto.response.ChangePasswordResponse;
@@ -267,5 +268,50 @@ public class UserServiceImpl implements UserService {
             result.put(key, value);
         }
         return result;
+    }
+
+    @Override
+    @Transactional
+    public UserResponse createUserByAdmin(AdminUserCreateRequest request, String adminUsername) {
+        User admin = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        messageSource.getMessage("error.user.not.found", new Object[]{adminUsername}, LocaleContextHolder.getLocale())
+                ));
+                
+        if (admin.getRole() != UserRole.ADMIN) {
+            throw new IllegalArgumentException(messageSource.getMessage("error.unauthorized", null, LocaleContextHolder.getLocale()));
+        }
+        
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new IllegalArgumentException(messageSource.getMessage("error.username.exists", null, LocaleContextHolder.getLocale()));
+        }
+        
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalArgumentException(messageSource.getMessage("error.email.exists", null, LocaleContextHolder.getLocale()));
+        }
+        
+        if (userRepository.findByPhone(request.getPhone()).isPresent()) {
+            throw new IllegalArgumentException(messageSource.getMessage("error.phone.exists", null, LocaleContextHolder.getLocale()));
+        }
+        
+        String avatarUrl = null;
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            avatarUrl = cloudinaryService.uploadImage(request.getAvatar());
+        }
+        
+        User user = User.builder()
+                .username(request.getUsername())
+                .role(request.getRole())
+                .name(request.getName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .avatar(avatarUrl)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .createDate(LocalDateTime.now())
+                .createBy(adminUsername)
+                .build();
+        
+        User savedUser = userRepository.save(user);
+        return UserResponse.fromUser(savedUser);
     }
 }

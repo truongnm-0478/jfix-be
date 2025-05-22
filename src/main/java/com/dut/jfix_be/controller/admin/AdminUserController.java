@@ -5,18 +5,23 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dut.jfix_be.dto.ApiResponse;
 import com.dut.jfix_be.dto.DataWithPageResponse;
+import com.dut.jfix_be.dto.request.AdminUserCreateRequest;
 import com.dut.jfix_be.dto.response.UserAdminResponse;
+import com.dut.jfix_be.dto.response.UserResponse;
 import com.dut.jfix_be.enums.UserRole;
 import com.dut.jfix_be.service.UserService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -57,5 +62,11 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<String>> unlockUser(@PathVariable Integer id, @AuthenticationPrincipal UserDetails adminDetails) {
         String result = userService.unlockUser(id, adminDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+    
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @ModelAttribute AdminUserCreateRequest request, @AuthenticationPrincipal UserDetails adminDetails) {
+        UserResponse user = userService.createUserByAdmin(request, adminDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success(user));
     }
 } 
