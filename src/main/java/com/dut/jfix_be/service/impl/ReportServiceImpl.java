@@ -16,10 +16,12 @@ import com.dut.jfix_be.dto.request.ReportRequest;
 import com.dut.jfix_be.dto.response.ReportResponse;
 import com.dut.jfix_be.entity.Card;
 import com.dut.jfix_be.entity.Report;
+import com.dut.jfix_be.entity.User;
 import com.dut.jfix_be.exception.ResourceNotFoundException;
 import com.dut.jfix_be.repository.CardRepository;
 import com.dut.jfix_be.repository.ReportRepository;
 import com.dut.jfix_be.repository.UserRepository;
+import com.dut.jfix_be.service.NotificationService;
 import com.dut.jfix_be.service.ReportService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,7 @@ public class ReportServiceImpl implements ReportService {
     private final MessageSource messageSource;
     private final SimpMessagingTemplate messagingTemplate;
     private final ReportRepository reportRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -69,34 +72,45 @@ public class ReportServiceImpl implements ReportService {
         notifyObj.put("content", request.getContent());
         messagingTemplate.convertAndSend("/topic/admin-report", notifyObj);
         
+        notificationService.notifyAdminsOfNewReport(report, userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("error.user.not.found")));
+        
         String responseMessage = messageSource.getMessage(
             "report.success",
             null,
-            "Đã gửi báo cáo thành công",
+            "success.report.sent",
             LocaleContextHolder.getLocale()
         );
-        return new ReportResponse(itemId, itemType, responseMessage, null);
+        return new ReportResponse(report.getId(), itemId, itemType, request.getContent(), report.getCreateDate().toString(), report.getIsRead());
     }
 
     @Override
     public List<ReportResponse> getUnreadReports() {
-        return reportRepository.findAll().stream()
-                .filter(report -> Boolean.FALSE.equals(report.getIsRead()))
-                .map(r -> new ReportResponse(r.getId(), r.getItemId(), r.getItemType(), r.getContent()))
-                .collect(Collectors.toList());
+        return reportRepository.findAllUnreadReports().stream()
+            .map(report -> {
+                User user = userRepository.findById(report.getUserId())
+                    .orElseThrow(() -> new RuntimeException("error.user.not.found"));
+                return notificationService.convertToDetailResponse(report, user);
+            })
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<ReportResponse> getAllReports() {
-        return reportRepository.findAll().stream()
-                .map(r -> new ReportResponse(r.getId(), r.getItemId(), r.getItemType(), r.getContent()))
-                .collect(Collectors.toList());
+        return reportRepository.findAllReportsOrderByCreateDateDesc().stream()
+            .map(report -> {
+                User user = userRepository.findById(report.getUserId())
+                    .orElseThrow(() -> new RuntimeException("error.report.not.found"));
+                return notificationService.convertToDetailResponse(report, user);
+            })
+            .collect(Collectors.toList());
+        
     }
 
     @Override
+    @Transactional
     public void markReportAsRead(Integer id) {
         Report report = reportRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("error.report.not.found", id, LocaleContextHolder.getLocale()));
+            .orElseThrow(() -> new RuntimeException("error.report.not.found"));
         report.setIsRead(true);
         reportRepository.save(report);
     }

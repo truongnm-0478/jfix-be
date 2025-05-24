@@ -31,7 +31,6 @@ public class ReportController {
         ReportResponse response = reportService.reportError(request);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-
     
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/unread")
@@ -39,7 +38,6 @@ public class ReportController {
         List<ReportResponse> response = reportService.getUnreadReports();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
