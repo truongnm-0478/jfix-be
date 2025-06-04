@@ -329,35 +329,76 @@ public class LearningGoalServiceImpl implements LearningGoalService {
         }
 
         if (isTargetLevelChanged) {
-            deleteAllDecksAndRelated(user.getId());
-            currentGoal.setTargetLevel(request.getTargetLevel());
-            currentGoal.setDescription(request.getDescription());
-            currentGoal.setDailyMinutes(request.getDailyMinutes());
-            currentGoal.setDailyVocabTarget(request.getDailyVocabTarget());
-            currentGoal.setTargetDate(request.getTargetDate());
-            currentGoal.setUpdateDate(LocalDateTime.now());
-            currentGoal.setUpdateBy(username);
-            learningGoalRepository.save(currentGoal);
-            LearningGoalResponse response = LearningGoalResponse.fromLearningGoal(currentGoal);
-            setupInitialLearningDecks(user.getId(), response);
-            return response;
+            if (currentGoal.getTargetLevel() == JlptLevel.FREE && request.getTargetLevel() != JlptLevel.FREE) {
+                if (request.getDailyMinutes() == null || request.getDailyMinutes() <= 0) {
+                    throw new IllegalArgumentException(
+                        messageSource.getMessage("validation.daily.minutes.required", null, LocaleContextHolder.getLocale())
+                    );
+                }
+                if (request.getDailyVocabTarget() == null || request.getDailyVocabTarget() <= 0) {
+                    throw new IllegalArgumentException(
+                        messageSource.getMessage("validation.daily.vocab.required", null, LocaleContextHolder.getLocale())
+                    );
+                }
+                if (request.getTargetDate() == null) {
+                    throw new IllegalArgumentException(
+                        messageSource.getMessage("validation.target.date.required", null, LocaleContextHolder.getLocale())
+                    );
+                }
+                if (request.getTargetDate().isBefore(LocalDate.now())) {
+                    throw new IllegalArgumentException(
+                        messageSource.getMessage("error.target.date.must.be.future", null, LocaleContextHolder.getLocale())
+                    );
+                }
+            }
+
+            try {
+                deleteAllDecksAndRelated(user.getId());
+                currentGoal.setTargetLevel(request.getTargetLevel());
+                currentGoal.setDescription(request.getDescription());
+                currentGoal.setDailyMinutes(request.getDailyMinutes());
+                currentGoal.setDailyVocabTarget(request.getDailyVocabTarget());
+                currentGoal.setTargetDate(request.getTargetDate());
+                currentGoal.setUpdateDate(LocalDateTime.now());
+                currentGoal.setUpdateBy(username);
+                learningGoalRepository.save(currentGoal);
+                
+                LearningGoalResponse response = LearningGoalResponse.fromLearningGoal(currentGoal);
+                
+                if (request.getTargetLevel() != JlptLevel.FREE) {
+                    setupInitialLearningDecks(user.getId(), response);
+                }
+                
+                return response;
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    messageSource.getMessage("error.learning.goal.update.failed", null, LocaleContextHolder.getLocale()),
+                    e
+                );
+            }
         } else if (isDailyMinutesChanged || isDailyVocabTargetChanged || isTargetDateChanged) {
-            currentGoal.setDailyMinutes(request.getDailyMinutes());
-            currentGoal.setDailyVocabTarget(request.getDailyVocabTarget());
-            currentGoal.setTargetDate(request.getTargetDate());
-            currentGoal.setDescription(request.getDescription());
-            currentGoal.setUpdateDate(LocalDateTime.now());
-            currentGoal.setUpdateBy(username);
-            learningGoalRepository.save(currentGoal);
-            redistributeUnlearnedCards(user.getId(), currentGoal);
-            return LearningGoalResponse.fromLearningGoal(currentGoal);
-        } else if (isDescriptionChanged) {
-            currentGoal.setDescription(request.getDescription());
-            currentGoal.setUpdateDate(LocalDateTime.now());
-            currentGoal.setUpdateBy(username);
-            learningGoalRepository.save(currentGoal);
-            return LearningGoalResponse.fromLearningGoal(currentGoal);
+            try {
+                currentGoal.setDailyMinutes(request.getDailyMinutes());
+                currentGoal.setDailyVocabTarget(request.getDailyVocabTarget());
+                currentGoal.setTargetDate(request.getTargetDate());
+                currentGoal.setDescription(request.getDescription());
+                currentGoal.setUpdateDate(LocalDateTime.now());
+                currentGoal.setUpdateBy(username);
+                learningGoalRepository.save(currentGoal);
+                
+                if (currentGoal.getTargetLevel() != JlptLevel.FREE) {
+                    redistributeUnlearnedCards(user.getId(), currentGoal);
+                }
+                
+                return LearningGoalResponse.fromLearningGoal(currentGoal);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    messageSource.getMessage("error.learning.goal.update.failed", null, LocaleContextHolder.getLocale()),
+                    e
+                );
+            }
         }
+
         return LearningGoalResponse.fromLearningGoal(currentGoal);
     }
 

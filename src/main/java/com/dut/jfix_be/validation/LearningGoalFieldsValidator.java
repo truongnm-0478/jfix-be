@@ -20,29 +20,33 @@ public class LearningGoalFieldsValidator implements ConstraintValidator<Learning
             return true;
         }
 
-        // If targetLevel is FREE, all other fields can be null
-        if (request.getTargetLevel() == JlptLevel.FREE) {
-            return true;
-        }
+        if (request.getTargetLevel() != JlptLevel.FREE) {
+            if (request.getDailyMinutes() == null) {
+                addConstraintViolation(context, "validation.daily.minutes.required");
+                return false;
+            }
+            if (request.getDailyVocabTarget() == null) {
+                addConstraintViolation(context, "validation.daily.vocab.required");
+                return false;
+            }
+            if (request.getTargetDate() == null) {
+                addConstraintViolation(context, "validation.target.date.required");
+                return false;
+            }
+            
+            if (request.getTargetDate().isBefore(LocalDate.now())) {
+                addConstraintViolation(context, "error.target.date.must.be.future");
+                return false;
+            }
 
-        // If targetLevel is not FREE, validate other required fields
-        if (request.getDailyMinutes() == null) {
-            addConstraintViolation(context, "validation.daily.minutes.required");
-            return false;
-        }
-        if (request.getDailyVocabTarget() == null) {
-            addConstraintViolation(context, "validation.daily.vocab.required");
-            return false;
-        }
-        if (request.getTargetDate() == null) {
-            addConstraintViolation(context, "validation.target.date.required");
-            return false;
-        }
-        
-        // Validate that target date is in the future
-        if (request.getTargetDate().isBefore(LocalDate.now())) {
-            addConstraintViolation(context, "error.target.date.must.be.future");
-            return false;
+            if (request.getDailyMinutes() <= 0) {
+                addConstraintViolation(context, "validation.daily.minutes.min");
+                return false;
+            }
+            if (request.getDailyVocabTarget() <= 0) {
+                addConstraintViolation(context, "validation.daily.vocab.min");
+                return false;
+            }
         }
 
         return true;
